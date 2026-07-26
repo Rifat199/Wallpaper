@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>অ্যাডমিন আপলোড প্যানেল</title>
+    
+    <!-- ফায়ারবেস SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
     <style>
         * {
             margin: 0;
@@ -26,6 +31,7 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
             width: 100%;
             max-width: 400px;
+            position: relative;
         }
         .admin-box h2 {
             margin-bottom: 20px;
@@ -77,11 +83,39 @@
         .back-link:hover {
             text-decoration: underline;
         }
+        .logout-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .logout-btn:hover {
+            background: #c0392b;
+        }
     </style>
 </head>
 <body>
 
-    <div class="admin-box">
+    <div class="admin-box" id="loginBox">
+        <h2>অ্যাডমিন লগইন</h2>
+        <div class="form-group">
+            <label for="adminPass">পাসওয়ার্ড দিন:</label>
+            <input type="password" id="adminPass" placeholder="পাসওয়ার্ড লিখুন">
+        </div>
+        <button class="btn" onclick="checkPassword()">লগইন করুন</button>
+        <p id="loginStatus" style="margin-top: 15px; text-align: center; color: #e74c3c; font-weight: bold;"></p>
+        <a href="index.html" class="back-link">← মূল ওয়েবসাইটে ফিরে যান</a>
+    </div>
+
+    <div class="admin-box" id="panelBox" style="display: none;">
+        <button class="logout-btn" onclick="logoutAdmin()">লগআউট</button>
         <h2>অ্যাডমিন প্যানেল</h2>
         <div class="form-group">
             <label for="apiKey">ImgBB API Key:</label>
@@ -97,6 +131,50 @@
     </div>
 
     <script>
+        const correctPassword = "Rifat$1993";
+
+        window.onload = function() {
+            if (localStorage.getItem("isAdminLoggedIn") === "true") {
+                document.getElementById('loginBox').style.display = 'none';
+                document.getElementById('panelBox').style.display = 'block';
+            }
+        };
+
+        function checkPassword() {
+            const passInput = document.getElementById('adminPass').value;
+            const loginStatus = document.getElementById('loginStatus');
+
+            if (passInput === correctPassword) {
+                localStorage.setItem("isAdminLoggedIn", "true");
+                document.getElementById('loginBox').style.display = 'none';
+                document.getElementById('panelBox').style.display = 'block';
+            } else {
+                loginStatus.innerText = 'ভুল পাসওয়ার্ড! আবার চেষ্টা করুন।';
+            }
+        }
+
+        function logoutAdmin() {
+            localStorage.removeItem("isAdminLoggedIn");
+            document.getElementById('panelBox').style.display = 'none';
+            document.getElementById('loginBox').style.display = 'block';
+            document.getElementById('adminPass').value = '';
+            document.getElementById('loginStatus').innerText = '';
+        }
+
+        // ফায়ারবেস কনফিগারেশন (আপনার স্ক্রিনশট অনুযায়ী)
+        const firebaseConfig = {
+            apiKey: "AIzaSyBmW8LE1Z22u4NiFtkTkU7SJtOZhy4tQLik",
+            authDomain: "wallpaper-76b9a.firebaseapp.com",
+            databaseURL: "https://wallpaper-76b9a-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "wallpaper-76b9a",
+            storageBucket: "wallpaper-76b9a.firebasestorage.app",
+            messagingSenderId: "717212155948",
+            appId: "1:717212155948:web:d20a8a7286e4b98f4f1189"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
         async function uploadWallpaper() {
             const apiKeyInput = document.getElementById('apiKey').value.trim();
             const fileInput = document.getElementById('imageFile').files[0];
@@ -127,27 +205,13 @@
                 if (data.success) {
                     const imageUrl = data.data.url;
                     
-                    // আগের ডাটা লোড করা
-                    let wallpapers = JSON.parse(localStorage.getItem('wallpapers')) || [];
-                    
-                    // পুরোনো ডাটা যদি স্ট্রিং ফরম্যাটে থাকে, তবে সেগুলোকে নতুন অবজেক্টে রূপান্তর করে নেওয়া
-                    wallpapers = wallpapers.map(item => {
-                        if (typeof item === 'string') {
-                            return { url: item, downloads: 0, likes: 0, dislikes: 0 };
-                        }
-                        return item;
-                    });
-                    
-                    // নতুন ছবিটিকে সঠিক অবজেক্ট ফরম্যাটে সবার উপরে যোগ করা
-                    wallpapers.unshift({
+                    // সরাসরি ফায়ারবেস ডাটাবেসে সেভ করা (সবার জন্য লাইভ দেখানোর জন্য)
+                    database.ref('wallpapers').push({
                         url: imageUrl,
                         downloads: 0,
                         likes: 0,
                         dislikes: 0
                     });
-                    
-                    // লোকালস্টোরেজে সেভ করা
-                    localStorage.setItem('wallpapers', JSON.stringify(wallpapers));
 
                     statusText.style.color = '#2ecc71';
                     statusText.innerText = 'সফলভাবে আপলোড হয়েছে!';
