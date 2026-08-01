@@ -383,7 +383,7 @@
         let currentCategory = 'all';
 
         let currentPage = 1;
-        const itemsPerPage = 16;
+        const itemsPerPage = 16; // প্রতি পেজে ১৬টি করে আইটেম
 
         window.onload = function() {
             loadWallpapersFromFirebase();
@@ -424,7 +424,9 @@
             });
         }
 
+        // ক্যাটাগরি পরিবর্তনের সময় লোডার শো করার ফাংশন
         function filterCategory(category, btnElement) {
+            showPreloader();
             currentCategory = category;
             currentPage = 1;
             
@@ -432,17 +434,30 @@
             buttons.forEach(btn => btn.classList.remove('active'));
             btnElement.classList.add('active');
             
-            renderGallery();
+            setTimeout(() => {
+                renderGallery();
+                hidePreloader();
+            }, 300);
         }
 
+        // পেজ পরিবর্তনের (Next / Previous) সময় লোডার শো করার ফাংশন
         function changePage(direction) {
+            showPreloader();
             currentPage += direction;
-            renderGallery();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            
+            setTimeout(() => {
+                renderGallery();
+                hidePreloader();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }, 300);
         }
 
-        function preloadImages() {
-            hidePreloader();
+        function showPreloader() {
+            const preloader = document.getElementById('preloader');
+            if (preloader) {
+                preloader.style.display = 'flex';
+                preloader.style.opacity = '1';
+            }
         }
 
         function hidePreloader() {
@@ -451,7 +466,7 @@
                 preloader.style.opacity = '0';
                 setTimeout(() => {
                     preloader.style.display = 'none';
-                }, 500);
+                }, 300);
             }
         }
 
@@ -498,10 +513,9 @@
                 card.onclick = () => openModal(item.id);
 
                 const img = document.createElement('img');
-                img.dataset.src = item.url; // লেজি লোডিং এর জন্য ডাটা সোর্স
                 img.src = item.url; 
                 img.alt = 'Wallpaper';
-                img.loading = 'lazy'; // ব্রাউজার লেজি লোডিং ফিক্স
+                img.loading = 'lazy'; // ব্রাউজার লেজি লোডিং
 
                 const footer = document.createElement('div');
                 footer.className = 'card-footer';
@@ -612,8 +626,6 @@
                 newDislikes--;
                 delete userInteractions[currentActiveId];
             } else {
-                if (userState ===5 === 'like') { // Keep logic safe
-                }
                 if (userState === 'like') {
                     newLikes--;
                 }
