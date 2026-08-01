@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>অ্যাডমিন আপলোড প্যানেল</title>
+    <title>অ্যাডমিন আপলোড প্যানেল ও রিপোর্ট</title>
     
     <!-- ফায়ারবেস SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -22,7 +22,8 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
+            padding: 20px;
         }
         .admin-box {
             background: #34495e;
@@ -30,7 +31,7 @@
             border-radius: 10px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
             width: 100%;
-            max-width: 400px;
+            max-width: 500px;
             position: relative;
         }
         .admin-box h2 {
@@ -46,11 +47,16 @@
             margin-bottom: 5px;
             font-weight: bold;
         }
-        .form-group input {
+        .form-group input, .form-group select {
             width: 100%;
             padding: 10px;
             border: 1px solid #7f8c8d;
             border-radius: 5px;
+            background: #2c3e50;
+            color: white;
+            font-size: 14px;
+        }
+        .form-group select option {
             background: #2c3e50;
             color: white;
         }
@@ -99,6 +105,33 @@
         .logout-btn:hover {
             background: #c0392b;
         }
+
+        /* অ্যানালিটিক্স রিপোর্ট বক্সের স্টাইল */
+        .report-box {
+            margin-top: 25px;
+            background: #2c3e50;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #7f8c8d;
+        }
+        .report-box h3 {
+            color: #f39c12;
+            font-size: 16px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .report-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            margin-bottom: 8px;
+            padding-bottom: 5px;
+            border-bottom: 1px dashed #34495e;
+        }
+        .report-item span:last-child {
+            font-weight: bold;
+            color: #1abc9c;
+        }
     </style>
 </head>
 <body>
@@ -111,7 +144,7 @@
         </div>
         <button class="btn" onclick="checkPassword()">লগইন করুন</button>
         <p id="loginStatus" style="margin-top: 15px; text-align: center; color: #e74c3c; font-weight: bold;"></p>
-        <a href="index.html" class="back-link">← মূল ওয়েবসাইটে ফিরে যান</a>
+        
     </div>
 
     <div class="admin-box" id="panelBox" style="display: none;">
@@ -121,13 +154,49 @@
             <label for="apiKey">ImgBB API Key:</label>
             <input type="text" id="apiKey" value="475440804bcea6371364911682370b57">
         </div>
+        
+        <!-- ক্যাটাগরি সিলেক্ট করার ড্রপডাউন -->
+        <div class="form-group">
+            <label for="wallpaperCategory">ক্যাটাগরি সিলেক্ট করুন:</label>
+            <select id="wallpaperCategory">
+                <option value="islamic">Islamic</option>
+                <option value="hindu">Hindu</option>
+                <option value="christian">Christian</option>
+                <option value="buddhist">Buddhist</option>
+                <option value="nature">Nature</option>
+                <option value="flowers">Flowers</option>
+                <option value="buildings">Buildings</option>
+                <option value="love">Love</option>
+                <option value="animals">Animals</option>
+                <option value="cityscapes">Cityscapes</option>
+            </select>
+        </div>
+
         <div class="form-group">
             <label for="imageFile">ওয়ালপেপার সিলেক্ট করুন:</label>
             <input type="file" id="imageFile" accept="image/*">
         </div>
         <button class="btn" onclick="uploadWallpaper()">সরাসরি আপলোড করুন</button>
         <p id="uploadStatus"></p>
-        <a href="index.html" class="back-link">← মূল ওয়েবসাইটে ফিরে যান</a>
+
+        <!-- লাইভ রিপোর্ট ও অ্যানালিটিক্স সেকশন -->
+        <div class="report-box">
+            <h3>📊 সাইট ও ফটো রিপোর্ট</h3>
+            <div class="report-item">
+                <span>মোট সাইট ভিজিটর (Views):</span>
+                <span id="totalVisitsCount">লোড হচ্ছে...</span>
+            </div>
+            <div class="report-item">
+                <span>মোট আপলোডকৃত ছবি:</span>
+                <span id="totalWallpapersCount">লোড হচ্ছে...</span>
+            </div>
+            <div class="report-item">
+                <span>সর্বাধিক ডাউনলোড হওয়া ছবি:</span>
+                <span id="topDownloadedCount">লোড হচ্ছে...</span>
+            </div>
+        </div>
+
+      
     </div>
 
     <script>
@@ -137,6 +206,7 @@
             if (localStorage.getItem("isAdminLoggedIn") === "true") {
                 document.getElementById('loginBox').style.display = 'none';
                 document.getElementById('panelBox').style.display = 'block';
+                loadAdminReports(); // লগইন করা থাকলে রিপোর্ট লোড হবে
             }
         };
 
@@ -148,6 +218,7 @@
                 localStorage.setItem("isAdminLoggedIn", "true");
                 document.getElementById('loginBox').style.display = 'none';
                 document.getElementById('panelBox').style.display = 'block';
+                loadAdminReports(); // লগইন করার পর রিপোর্ট লোড হবে
             } else {
                 loginStatus.innerText = 'ভুল পাসওয়ার্ড! আবার চেষ্টা করুন।';
             }
@@ -161,7 +232,7 @@
             document.getElementById('loginStatus').innerText = '';
         }
 
-        // ফায়ারবেস কনফিগারেশন (আপনার স্ক্রিনশট অনুযায়ী)
+        // ফায়ারবেস কনফিগারেশন
         const firebaseConfig = {
             apiKey: "AIzaSyBmW8LE1Z22u4NiFtkTkU7SJtOZhy4tQLik",
             authDomain: "wallpaper-76b9a.firebaseapp.com",
@@ -175,17 +246,54 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
+        // অ্যাডমিন প্যানেলে লাইভ রিপোর্ট দেখানোর ফাংশন
+        function loadAdminReports() {
+            // মোট ভিজিটর কাউন্ট ফেচ করা
+            database.ref('site_stats/total_visits').on('value', (snapshot) => {
+                const visits = snapshot.val() || 0;
+                document.getElementById('totalVisitsCount').innerText = visits;
+            });
+
+            // ওয়ালপেপারের ডাটা ফেচ করে মোট ছবি ও সেরা ডাউনলোডের হিসাব বের করা
+            database.ref('wallpapers').on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (!data) {
+                    document.getElementById('totalWallpapersCount').innerText = '0';
+                    document.getElementById('topDownloadedCount').innerText = 'নেই';
+                    return;
+                }
+
+                let keys = Object.keys(data);
+                document.getElementById('totalWallpapersCount').innerText = keys.length;
+
+                let maxDownloads = -1;
+                let topItemName = 'নেই';
+
+                keys.forEach(key => {
+                    let item = data[key];
+                    let downloads = item.downloads || 0;
+                    if (downloads > maxDownloads) {
+                        maxDownloads = downloads;
+                        topItemName = `${downloads} বার ডাউনলোড`;
+                    }
+                });
+
+                document.getElementById('topDownloadedCount').innerText = topItemName;
+            });
+        }
+
         async function uploadWallpaper() {
             const apiKeyInput = document.getElementById('apiKey').value.trim();
+            const categoryInput = document.getElementById('wallpaperCategory').value;
             const fileInput = document.getElementById('imageFile').files[0];
             const statusText = document.getElementById('uploadStatus');
 
             if (!apiKeyInput) {
-                alert('দয়া করে API Key দিন!');
+                alert('দয়া করে API Key দিন!');
                 return;
             }
             if (!fileInput) {
-                alert('দয়া করে একটি ছবি সিলেক্ট করুন!');
+                alert('দয়া করে একটি ছবি সিলেক্ট করুন!');
                 return;
             }
 
@@ -205,20 +313,20 @@
                 if (data.success) {
                     const imageUrl = data.data.url;
                     
-                    // সরাসরি ফায়ারবেস ডাটাবেসে সেভ করা (সবার জন্য লাইভ দেখানোর জন্য)
                     database.ref('wallpapers').push({
                         url: imageUrl,
+                        category: categoryInput,
                         downloads: 0,
                         likes: 0,
                         dislikes: 0
                     });
 
                     statusText.style.color = '#2ecc71';
-                    statusText.innerText = 'সফলভাবে আপলোড হয়েছে!';
+                    statusText.innerText = 'সফলভাবে আপলোড হয়েছে!';
                     document.getElementById('imageFile').value = '';
                 } else {
                     statusText.style.color = '#e74c3c';
-                    statusText.innerText = 'ব্যর্থ হয়েছে: ' + data.error.message;
+                    statusText.innerText = 'ব্যর্থ হয়েছে: ' + data.error.message;
                 }
             } catch (error) {
                 statusText.style.color = '#e74c3c';
