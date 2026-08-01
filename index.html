@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wallpaper</title>
     
-    <!-- ফায়ারবেস SDK (আপনার অরিজিনাল কোড অপরিবর্তিত রেখে ফায়ারবেস কানেক্ট করার জন্য) -->
+    <!-- ফায়ারবেস SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
@@ -20,6 +20,37 @@
             background-color: #f4f7f6;
             color: #333;
         }
+
+        /* প্রিলোডার স্ক্রিন ডিজাইন */
+        #preloader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #1b4d3e;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            color: white;
+            transition: opacity 0.5s ease;
+        }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-top: 5px solid #ffffff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
         header {
             background: #1b4d3e;
             color: white;
@@ -27,20 +58,58 @@
             text-align: center;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
+
+        /* ক্যাটাগরি ফিল্টার বার */
+        .category-container {
+            background: #fff;
+            padding: 10px 15px;
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            white-space: nowrap;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            scrollbar-width: none;
+        }
+        .category-container::-webkit-scrollbar {
+            display: none;
+        }
+
+        .category-btn {
+            background: #f0f2f5;
+            color: #333;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .category-btn:hover {
+            background: #e2e8f0;
+        }
+
+        .category-btn.active {
+            background: #1b4d3e;
+            color: white;
+            box-shadow: 0 2px 4px rgba(27, 77, 62, 0.3);
+        }
+
         .container {
             max-width: 1200px;
             margin: 20px auto;
             padding: 0 15px;
         }
-        /* Gallery Grid - গুগল ইমেজ সার্চের মতো লেআউট */
+
         .gallery-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr); /* মোবাইলে পাশাপাশি ২টি কলাম */
+            grid-template-columns: repeat(2, 1fr);
             gap: 8px; 
-            margin-top: 20px;
+            margin-top: 10px;
         }
 
-        /* ডেস্কটপ মোডের জন্য একসাথে ৪টি কলাম */
         @media (min-width: 768px) {
             .gallery-grid {
                 grid-template-columns: repeat(4, 1fr); 
@@ -66,6 +135,7 @@
             height: 230px; 
             object-fit: cover;
             display: block;
+            background-color: #e0e0e0; /* ছবি লোড হওয়ার আগে ব্যাকগ্রাউন্ড শো করবে যাতে সাদা না দেখায় */
         }
 
         @media (min-width: 768px) {
@@ -74,7 +144,6 @@
             }
         }
 
-        /* কার্ডের ফুটার: বাম পাশে লাইক/ডিসলাইক এবং ডান পাশে ডাউনলোড কাউন্ট */
         .card-footer {
             padding: 8px 10px;
             background: #fff;
@@ -105,6 +174,52 @@
             display: flex;
             align-items: center;
             gap: 4px;
+        }
+
+        /* পেজিনেশন বাটন ডিজাইন */
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin: 30px 0;
+        }
+
+        .page-btn {
+            background: #fff;
+            border: 1px solid #ddd;
+            color: #1b4d3e;
+            padding: 10px 22px;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .page-btn:hover:not(:disabled) {
+            background: #1b4d3e;
+            color: white;
+            border-color: #1b4d3e;
+            transform: translateY(-2px);
+        }
+
+        .page-btn:disabled {
+            background: #f9f9f9;
+            color: #ccc;
+            border-color: #eee;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        #pageIndicator {
+            font-weight: 600;
+            font-size: 14px;
+            color: #555;
         }
 
         /* Lightbox Modal */
@@ -139,7 +254,6 @@
             cursor: pointer;
         }
 
-        /* মডালের নিচের আইকন বাটনগুলোর কন্টেইনার */
         .modal-actions {
             display: flex;
             gap: 15px;
@@ -167,7 +281,6 @@
             transform: scale(1.05);
         }
 
-        /* ইউজার যদি লাইক বা ডিসলাইক দিয়ে থাকে তবে তা হাইলাইট করার জন্য */
         .modal-action-btn.active-like {
             background: #27ae60;
             border-color: #27ae60;
@@ -186,31 +299,60 @@
 </head>
 <body>
 
+    <!-- প্রিলোডার স্ক্রিন -->
+    <div id="preloader">
+        <div class="spinner"></div>
+        <p>Loading, please wait...</p>
+    </div>
+
     <header>
-        <p>Islamic Wallpaper Gallery</p>
+        <p>Wallpaper Gallery</p>
     </header>
+
+    <!-- ক্যাটাগরি ফিল্টার বাটন বার -->
+    <div class="category-container" id="categoryContainer">
+        <button class="category-btn active" onclick="filterCategory('all', this)">All</button>
+        <button class="category-btn" onclick="filterCategory('islamic', this)">Islamic</button>
+        <button class="category-btn" onclick="filterCategory('hindu', this)">Hindu</button>
+        <button class="category-btn" onclick="filterCategory('christian', this)">Christian</button>
+        <button class="category-btn" onclick="filterCategory('buddhist', this)">Buddhist</button>
+        <button class="category-btn" onclick="filterCategory('nature', this)">Nature</button>
+        <button class="category-btn" onclick="filterCategory('flowers', this)">Flowers</button>
+        <button class="category-btn" onclick="filterCategory('buildings', this)">Buildings</button>
+        <button class="category-btn" onclick="filterCategory('love', this)">Love</button>
+        <button class="category-btn" onclick="filterCategory('animals', this)">Animals</button>
+        <button class="category-btn" onclick="filterCategory('cityscapes', this)">Cityscapes</button>
+    </div>
 
     <div class="container">
         <div class="gallery-grid" id="galleryGrid">
-            <!-- জাভাস্ক্রিপ্ট দিয়ে ছবিগুলো এখানে লোড হবে -->
+            <!-- জাভাস্ক্রিপ্ট দিয়ে ছবিগুলো এখানে লোড হবে -->
+        </div>
+
+        <!-- পেজিনেশন কন্ট্রোল -->
+        <div class="pagination-container" id="paginationContainer" style="display: none;">
+            <button class="page-btn" id="prevBtn" onclick="changePage(-1)">
+                <span>&#10094;</span> Previous
+            </button>
+            <span id="pageIndicator">Page 1 of 1</span>
+            <button class="page-btn" id="nextBtn" onclick="changePage(1)">
+                Next <span>&#10095;</span>
+            </button>
         </div>
     </div>
 
-    <!-- লাইটবক্স মডাল (বড় প্রিভিউ এবং তিনটি আইকন বাটন) -->
+    <!-- লাইটবক্স মডাল -->
     <div class="modal" id="imageModal">
         <span class="close-btn" onclick="closeModal()">&times;</span>
         <div class="modal-content">
             <img id="modalImg" src="" alt="Large View">
             <div class="modal-actions">
-                <!-- লাইক বাটন (শুধু আইকন ও কাউন্ট) -->
                 <button class="modal-action-btn" id="modalLikeBtn" onclick="handleLike()">
                     👍 <span class="btn-count" id="modalLikeCount">0</span>
                 </button>
-                <!-- ডিসলাইক বাটন (শুধু আইকন ও কাউন্ট) -->
                 <button class="modal-action-btn" id="modalDislikeBtn" onclick="handleDislike()">
                     👎 <span class="btn-count" id="modalDislikeCount">0</span>
                 </button>
-                <!-- ডাউনলোড বাটন (শুধু আইকন ও কাউন্ট) -->
                 <button class="modal-action-btn" id="modalDownloadBtn" onclick="handleDownload()">
                     📥 <span class="btn-count" id="modalDownloadCount">0</span>
                 </button>
@@ -219,7 +361,7 @@
     </div>
 
     <script>
-        // ফায়ারবেস কনফিগারেশন (আপনার স্ক্রিনশট অনুযায়ী)
+        // ফায়ারবেস কনফিগারেশন
         const firebaseConfig = {
             apiKey: "AIzaSyBmW8LE1Z22u4NiFtkTkU7SJtOZhy4tQLik",
             authDomain: "wallpaper-76b9a.firebaseapp.com",
@@ -237,12 +379,25 @@
         let userInteractions = JSON.parse(localStorage.getItem('userInteractions')) || {};
         let currentActiveUrl = '';
         let currentActiveId = '';
+        let isFirstLoad = true;
+        let currentCategory = 'all';
+
+        let currentPage = 1;
+        const itemsPerPage = 48;
 
         window.onload = function() {
             loadWallpapersFromFirebase();
+            trackVisitor(); // ভিজিটর কাউন্ট ট্র্যাক করার ফাংশন
         };
 
-        // ফায়ারবেস থেকে লাইভ ডাটা লোড করা
+        // ভিজিটর কাউন্ট ফাংশন
+        function trackVisitor() {
+            const visitorRef = database.ref('site_stats/total_visits');
+            visitorRef.transaction((currentVisits) => {
+                return (currentVisits || 0) + 1;
+            });
+        }
+
         function loadWallpapersFromFirebase() {
             database.ref('wallpapers').on('value', (snapshot) => {
                 const data = snapshot.val();
@@ -252,6 +407,7 @@
                         wallpapers.push({
                             id: key,
                             url: data[key].url,
+                            category: data[key].category ? data[key].category.toLowerCase() : 'islamic',
                             downloads: data[key].downloads || 0,
                             likes: data[key].likes || 0,
                             dislikes: data[key].dislikes || 0
@@ -260,10 +416,45 @@
                     wallpapers.reverse();
                 }
                 renderGallery();
+
+                if (isFirstLoad) {
+                    isFirstLoad = false;
+                    hidePreloader();
+                }
             });
         }
 
-        // সংখ্যা ফরম্যাট ফাংশন (k, L, Cr)
+        function filterCategory(category, btnElement) {
+            currentCategory = category;
+            currentPage = 1;
+            
+            const buttons = document.querySelectorAll('.category-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            btnElement.classList.add('active');
+            
+            renderGallery();
+        }
+
+        function changePage(direction) {
+            currentPage += direction;
+            renderGallery();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function preloadImages() {
+            hidePreloader();
+        }
+
+        function hidePreloader() {
+            const preloader = document.getElementById('preloader');
+            if (preloader) {
+                preloader.style.opacity = '0';
+                setTimeout(() => {
+                    preloader.style.display = 'none';
+                }, 500);
+            }
+        }
+
         function formatNumber(num) {
             if (num >= 10000000) {
                 return (num / 10000000).toFixed(1).replace(/\.0$/, '') + ' Cr';
@@ -279,23 +470,39 @@
 
         function renderGallery() {
             const grid = document.getElementById('galleryGrid');
+            const paginationContainer = document.getElementById('paginationContainer');
             grid.innerHTML = '';
 
-            if (wallpapers.length === 0) {
-                grid.innerHTML = '<p>বর্তমানে কোনো ওয়ালপেপার নেই।</p>';
+            let filteredWallpapers = wallpapers;
+            if (currentCategory !== 'all') {
+                filteredWallpapers = wallpapers.filter(item => item.category === currentCategory);
+            }
+
+            if (filteredWallpapers.length === 0) {
+                grid.innerHTML = '<p style="grid-column: span 4; text-align: center; padding: 40px; color: #777;">বর্তমানে এই ক্যাটাগরিতে কোনো ওয়ালপেপার নেই।</p>';
+                paginationContainer.style.display = 'none';
                 return;
             }
 
-            wallpapers.forEach((item) => {
+            const totalPages = Math.ceil(filteredWallpapers.length / itemsPerPage);
+            if (currentPage > totalPages) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
+
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const paginatedItems = filteredWallpapers.slice(startIndex, endIndex);
+
+            paginatedItems.forEach((item) => {
                 const card = document.createElement('div');
                 card.className = 'wallpaper-card';
                 card.onclick = () => openModal(item.id);
 
                 const img = document.createElement('img');
-                img.src = item.url;
+                img.dataset.src = item.url; // লেজি লোডিং এর জন্য ডাটা সোর্স
+                img.src = item.url; 
                 img.alt = 'Wallpaper';
+                img.loading = 'lazy'; // ব্রাউজার লেজি লোডিং ফিক্স
 
-                // কার্ডের ফুটার: বাম পাশে লাইক/ডিসলাইক এবং ডান পাশে ডাউনলোড কাউন্ট
                 const footer = document.createElement('div');
                 footer.className = 'card-footer';
 
@@ -317,6 +524,15 @@
                 card.appendChild(footer);
                 grid.appendChild(card);
             });
+
+            if (totalPages > 1) {
+                paginationContainer.style.display = 'flex';
+                document.getElementById('pageIndicator').innerText = `Page ${currentPage} of ${totalPages}`;
+                document.getElementById('prevBtn').disabled = currentPage === 1;
+                document.getElementById('nextBtn').disabled = currentPage === totalPages;
+            } else {
+                paginationContainer.style.display = 'none';
+            }
         }
 
         function openModal(id) {
@@ -334,7 +550,6 @@
             updateModalUI();
         }
 
-        // মডালের ভেতরের কাউন্ট ও স্টাইল আপডেট করার ফাংশন
         function updateModalUI() {
             const item = wallpapers.find(w => w.id === currentActiveId);
             if (!item) return;
@@ -357,7 +572,6 @@
             }
         }
 
-        // সিঙ্গেল লাইক লজিক
         function handleLike() {
             const item = wallpapers.find(w => w.id === currentActiveId);
             if (!item) return;
@@ -386,7 +600,6 @@
             updateModalUI();
         }
 
-        // সিঙ্গেল ডিসলাইক লজিক
         function handleDislike() {
             const item = wallpapers.find(w => w.id === currentActiveId);
             if (!item) return;
@@ -399,6 +612,8 @@
                 newDislikes--;
                 delete userInteractions[currentActiveId];
             } else {
+                if (userState ===5 === 'like') { // Keep logic safe
+                }
                 if (userState === 'like') {
                     newLikes--;
                 }
@@ -415,7 +630,6 @@
             updateModalUI();
         }
 
-        // ডাউনলোড কাউন্ট বাড়ানো, ছবি ডাউনলোড করা এবং এডস্টার্তা লিংক ওপেন করা
         function handleDownload() {
             const item = wallpapers.find(w => w.id === currentActiveId);
             if (item) {
@@ -424,10 +638,8 @@
                     downloads: newDownloads
                 });
 
-                // ১. বিজ্ঞাপনের লিংকটি নতুন ট্যাবে ওপেন হবে (ইনকামের জন্য)
                 window.open('https://omg10.com/4/11003504', '_blank');
 
-                // ২. ছবি ডাউনলোডের মূল কাজ সম্পন্ন হবে
                 fetch(currentActiveUrl)
                     .then(response => response.blob())
                     .then(blob => {
@@ -441,7 +653,6 @@
                         window.URL.revokeObjectURL(blobUrl);
                     })
                     .catch(() => {
-                        // CORS ব্লকিং এড়াতে বিকল্প পদ্ধতি
                         window.open(currentActiveUrl, '_blank');
                     });
             }
