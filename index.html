@@ -306,7 +306,7 @@
 </head>
 <body>
 
-    <!-- প্রিলোডার স্ক্রিন (শুধু প্রথমবার ওয়েবসাইট ওপেন হলে আসবে) -->
+    <!-- প্রিলোডার স্ক্রিন (শুধু প্রথমবার ওয়েবসাইট ওপেন হলে আসবে) -->
     <div id="preloader">
         <div class="spinner"></div>
         <p>Loading, please wait...</p>
@@ -437,7 +437,7 @@
             });
         }
 
-        // ক্যাটাগরি পরিবর্তনের সময় পুরো পেজ নয়, শুধু গ্রিড স্মুথলি আপডেট হবে
+        // ক্যাটাগরি পরিবর্তনের সময় পুরো পেজ নয়, শুধু গ্রিড স্মুথলি আপডেট হবে
         function filterCategory(category, btnElement) {
             currentCategory = category;
             currentPage = 1;
@@ -449,7 +449,7 @@
             renderGallery();
         }
 
-        // পেজ পরিবর্তনের সময় পুরো পেজ রিফ্রেশ না করে শুধু গ্রিড আপডেট করবে
+        // পেজ পরিবর্তনের সময় পুরো পেজ রিফ্রেশ না করে শুধু গ্রিড আপডেট করবে
         function changePage(direction) {
             currentPage += direction;
             renderGallery();
@@ -483,7 +483,7 @@
             const grid = document.getElementById('galleryGrid');
             const paginationContainer = document.getElementById('paginationContainer');
 
-            // হালকা ফেড ইফেক্ট দেওয়ার জন্য অপাসিটি ০ করা
+            // হালকা ফেড ইফেক্ট দেওয়ার জন্য অপাসিটি ০ করা
             grid.style.opacity = '0';
 
             setTimeout(() => {
@@ -550,7 +550,7 @@
                     paginationContainer.style.display = 'none';
                 }
 
-                // ছবি লোড হওয়ার পর গ্রিড আবার দৃশ্যমান করা
+                // ছবি লোড হওয়ার পর গ্রিড আবার দৃশ্যমান করা
                 grid.style.opacity = '1';
             }, 150);
         }
@@ -657,7 +657,7 @@
                     downloads: newDownloads
                 });
 
-                window.open('https://omg10.com/4/11003504', '_blank');
+                // বিজ্ঞাপন বা অন্য লিংকে রিডাইরেক্ট করার কোডটি এখান থেকে সফলভাবে বাদ দেওয়া হয়েছে।
 
                 fetch(currentActiveUrl)
                     .then(response => response.blob())
