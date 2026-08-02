@@ -79,16 +79,6 @@
             text-align: center;
             font-weight: bold;
         }
-        .back-link {
-            display: block;
-            text-align: center;
-            margin-top: 15px;
-            color: #bdc3c7;
-            text-decoration: none;
-        }
-        .back-link:hover {
-            text-decoration: underline;
-        }
         .logout-btn {
             position: absolute;
             top: 15px;
@@ -144,7 +134,6 @@
         </div>
         <button class="btn" onclick="checkPassword()">লগইন করুন</button>
         <p id="loginStatus" style="margin-top: 15px; text-align: center; color: #e74c3c; font-weight: bold;"></p>
-        
     </div>
 
     <div class="admin-box" id="panelBox" style="display: none;">
@@ -195,8 +184,6 @@
                 <span id="topDownloadedCount">লোড হচ্ছে...</span>
             </div>
         </div>
-
-      
     </div>
 
     <script>
@@ -206,7 +193,7 @@
             if (localStorage.getItem("isAdminLoggedIn") === "true") {
                 document.getElementById('loginBox').style.display = 'none';
                 document.getElementById('panelBox').style.display = 'block';
-                loadAdminReports(); // লগইন করা থাকলে রিপোর্ট লোড হবে
+                loadAdminReports();
             }
         };
 
@@ -218,7 +205,7 @@
                 localStorage.setItem("isAdminLoggedIn", "true");
                 document.getElementById('loginBox').style.display = 'none';
                 document.getElementById('panelBox').style.display = 'block';
-                loadAdminReports(); // লগইন করার পর রিপোর্ট লোড হবে
+                loadAdminReports();
             } else {
                 loginStatus.innerText = 'ভুল পাসওয়ার্ড! আবার চেষ্টা করুন।';
             }
@@ -246,15 +233,13 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // অ্যাডমিন প্যানেলে লাইভ রিপোর্ট দেখানোর ফাংশন
+        // অ্যাডমিন প্যানেলে লাইভ রিপোর্ট দেখানোর ফাংশন (মেইন কোডের ডেটা স্ট্রাকচার অনুযায়ী হিসাব করবে)
         function loadAdminReports() {
-            // মোট ভিজিটর কাউন্ট ফেচ করা
             database.ref('site_stats/total_visits').on('value', (snapshot) => {
                 const visits = snapshot.val() || 0;
                 document.getElementById('totalVisitsCount').innerText = visits;
             });
 
-            // ওয়ালপেপারের ডাটা ফেচ করে মোট ছবি ও সেরা ডাউনলোডের হিসাব বের করা
             database.ref('wallpapers').on('value', (snapshot) => {
                 const data = snapshot.val();
                 if (!data) {
@@ -263,21 +248,28 @@
                     return;
                 }
 
-                let keys = Object.keys(data);
-                document.getElementById('totalWallpapersCount').innerText = keys.length;
-
+                let totalCount = 0;
                 let maxDownloads = -1;
                 let topItemName = 'নেই';
 
-                keys.forEach(key => {
-                    let item = data[key];
-                    let downloads = item.downloads || 0;
-                    if (downloads > maxDownloads) {
-                        maxDownloads = downloads;
-                        topItemName = `${downloads} বার ডাউনলোড`;
+                // সব ক্যাটাগরি ফোল্ডার লুপ চালিয়ে হিসাব করা
+                Object.keys(data).forEach(categoryKey => {
+                    let categoryItems = data[categoryKey];
+                    if (categoryItems) {
+                        Object.keys(categoryItems).forEach(idKey => {
+                            let item = categoryItems[idKey];
+                            totalCount++;
+
+                            let downloads = item.downloads || 0;
+                            if (downloads > maxDownloads) {
+                                maxDownloads = downloads;
+                                topItemName = `${downloads} বার ডাউনলোড`;
+                            }
+                        });
                     }
                 });
 
+                document.getElementById('totalWallpapersCount').innerText = totalCount;
                 document.getElementById('topDownloadedCount').innerText = topItemName;
             });
         }
@@ -313,7 +305,8 @@
                 if (data.success) {
                     const imageUrl = data.data.url;
                     
-                    database.ref('wallpapers').push({
+                    // মেইন কোডের কাঠামোর সাথে মিল রেখে ক্যাটাগরি ফোল্ডারের ভেতরে ডাটা পাঠানো হচ্ছে
+                    database.ref('wallpapers/' + categoryInput).push({
                         url: imageUrl,
                         category: categoryInput,
                         downloads: 0,
