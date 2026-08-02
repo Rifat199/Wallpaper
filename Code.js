@@ -1,30 +1,40 @@
-function autoScrapeAndUploadWallpapers() {
+function autoScrapeAndUploadWallpapersMultiSource() {
   var imgbbApiKey = "475440804bcea6371364911682370b57";
-  var firebaseDbUrl = "https://wallpaper-76b9a-default-rtdb.asia-southeast1.firebasedatabase.app/wallpapers.json";
+  var firebaseDbUrl = "https://wallpaper-76b9a-default-rtdb.asia-southeast1.firebasedatabase.app/wallpapers/islamic.json";
   
-  // ক্যাটাগরি অনুযায়ী সার্চ কিউয়ার্ডের তালিকা
-  var categoriesData = [
-    { category: "islamic", queries: ["Islamic wallpaper", "Quran wallpaper", "Mecca wallpaper", "Allah calligraphy wallpaper", "Islamic art background", "Mosque architecture wallpaper", "Madina wallpaper", "Ramadan wallpaper", "Eid Mubarak background", "Islamic quotes wallpaper", "Kaaba background", "Islamic golden art"] },
-    { category: "hindu", queries: ["Hindu god wallpaper", "Shivling background", "Radha Krishna wallpaper", "Mahadev wallpaper", "Durga maa wallpaper", "Ganesha wallpaper", "Hanuman wallpaper"] },
-    { category: "christian", queries: ["Jesus Christ wallpaper", "Cross wallpaper", "Bible background", "Church wallpaper", "Christian aesthetic background"] },
-    { category: "buddhist", queries: ["Buddha wallpaper", "Lord Buddha background", "Buddhist temple wallpaper", "Zen background"] },
-    { category: "nature", queries: ["HD nature wallpaper", "sunset beautiful wallpaper", "mountain landscape wallpaper", "galaxy background", "aesthetic dark wallpaper"] },
-    { category: "flowers", queries: ["flower aesthetic background", "red rose love background", "cherry blossom wallpaper", "tulip flowers background"] },
-    { category: "buildings", queries: ["Mosque architecture wallpaper", "modern architecture wallpaper", "cityscape building background", "ancient palace wallpaper"] },
-    { category: "love", queries: ["beautiful love wallpaper", "romantic cute wallpaper", "heart aesthetic wallpaper", "lovely couples background", "cute love wallpaper", "sweet couple wallpaper", "romantic aesthetic wallpaper"] },
-    { category: "animals", queries: ["cute animal wallpaper", "wildlife nature wallpaper", "birds flying wallpaper", "cute cat dog background"] },
-    { category: "cityscapes", queries: ["city lights wallpaper", "night city background", "urban street wallpaper", "skyscraper skyline background"] }
+  // খাঁটি ইসলামিক ছবির জন্য নির্দিষ্ট ও নিখুঁত কিওয়ার্ডের তালিকা
+  var islamicQueries = [
+    "Mosque", "Kaaba", "Makkah", "Madinah", "Quran", 
+    "Masjid", "Islamic architecture", "Islamic calligraphy", 
+    "Prophet Mosque", "Hajj", "Islamic prayer", 
+    "Muslim praying", "Ramadan lantern", "Islamic art", "Dome of the Rock"
   ];
   
-  // র‍্যান্ডমলি একটি ক্যাটাগরি এবং তার ভেতর থেকে একটি কুয়েরি সিলেক্ট করা
-  var randomCategoryObj = categoriesData[Math.floor(Math.random() * categoriesData.length)];
-  var randomQuery = randomCategoryObj.queries[Math.floor(Math.random() * randomCategoryObj.queries.length)];
-  var selectedCategory = randomCategoryObj.category;
+  var randomQuery = islamicQueries[Math.floor(Math.random() * islamicQueries.length)];
   
-  var pixabayPublicApiKey = "51521104-24545ed8e6e3dc875e58e0b48";
-  var searchUrl = "https://pixabay.com/api/?key=" + pixabayPublicApiKey + "&q=" + encodeURIComponent(randomQuery) + "&image_type=photo&orientation=vertical&safesearch=true&per_page=10";
+  // তিন প্ল্যাটফর্মের এপিআই কি
+  var pixabayKey = "51521104-24545ed8e6e3dc875e58e0b48";
+  var pexelsKey = "iFzv2MvjEgppK1E1wvC50V198SaYx5wZvlbPVfl44TKjUSvFgK7Bw79E";
+  var unsplashKey = "0GkabyEH1jwVqoOamlVN1eR5qisvO4QIZISq_gCbMf4";
+
+  // তিনটি সোর্স থেকে সমানভাবে ছবি নেওয়ার অ্যারে
+  var sources = ["pixabay", "pexels", "unsplash"];
+  var chosenSource = sources[Math.floor(Math.random() * sources.length)];
+  
+  var searchUrl = "";
+  var fetchOptions = {};
+
+  if (chosenSource === "pixabay") {
+    searchUrl = "https://pixabay.com/api/?key=" + pixabayKey + "&q=" + encodeURIComponent(randomQuery) + "&image_type=photo&orientation=vertical&safesearch=true&per_page=15";
+  } else if (chosenSource === "pexels") {
+    searchUrl = "https://api.pexels.com/v1/search?query=" + encodeURIComponent(randomQuery) + "&orientation=portrait&per_page=15";
+    fetchOptions = { "headers": { "Authorization": pexelsKey } };
+  } else if (chosenSource === "unsplash") {
+    searchUrl = "https://api.unsplash.com/search/photos?query=" + encodeURIComponent(randomQuery) + "&orientation=portrait&per_page=15&client_id=" + unsplashKey;
+  }
 
   try {
+    // ফায়ারবেস থেকে ডুপ্লিকেট চেক করতে বিদ্যমান ডাটা আনা
     var existingDataResponse = UrlFetchApp.fetch(firebaseDbUrl);
     var existingWallpapers = JSON.parse(existingDataResponse.getContentText()) || {};
     var existingUrls = [];
@@ -34,13 +44,23 @@ function autoScrapeAndUploadWallpapers() {
       }
     }
 
-    var response = UrlFetchApp.fetch(searchUrl);
+    var response = UrlFetchApp.fetch(searchUrl, fetchOptions);
     var data = JSON.parse(response.getContentText());
+    var hits = [];
 
-    if (data.hits && data.hits.length > 0) {
-      data.hits.forEach(function(item) {
-        var sourceImageUrl = item.largeImageURL;
-        
+    // সঠিক সোর্স অনুযায়ী ছবির লিংক সংগ্রহ ও সাইজ অপ্টিমাইজ করা
+    if (chosenSource === "pixabay" && data.hits) {
+      hits = data.hits.map(item => item.largeImageURL);
+    } else if (chosenSource === "pexels" && data.photos) {
+      // অতিরিক্ত বড় সাইজ এড়াতে large ব্যবহার করা হয়েছে যাতে আপলোড ফেইল না করে
+      hits = data.photos.map(item => item.src.large || item.src.portrait);
+    } else if (chosenSource === "unsplash" && data.results) {
+      hits = data.results.map(item => item.urls.regular);
+    }
+
+    if (hits.length > 0) {
+      hits.forEach(function(sourceImageUrl) {
+        // ছবি আগে থেকে ফায়ারবেসে না থাকলে তবেই আপলোড হবে
         if (existingUrls.indexOf(sourceImageUrl) === -1) {
           var imageBlob = UrlFetchApp.fetch(sourceImageUrl).getBlob();
           
@@ -61,7 +81,7 @@ function autoScrapeAndUploadWallpapers() {
             var payload = JSON.stringify({
               url: finalImgbbUrl,
               sourceUrl: sourceImageUrl,
-              category: selectedCategory, // সঠিক ক্যাটাগরি নাম সেভ করা হচ্ছে
+              category: "islamic",
               downloads: 0,
               likes: 0,
               dislikes: 0,
@@ -74,6 +94,7 @@ function autoScrapeAndUploadWallpapers() {
               "payload": payload
             };
             
+            // ফায়ারবেসের ইসলামিক ফোল্ডারে সেভ করা
             UrlFetchApp.fetch(firebaseDbUrl, firebaseOptions);
           }
         }
