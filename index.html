@@ -21,7 +21,7 @@
             color: #333;
         }
 
-        /* প্রিলোডার স্ক্রিন ডিজাইন */
+        /* প্রিলোডার স্ক্রিন ডিজাইন (শুধু একদম প্রথম লোডের জন্য) */
         #preloader {
             position: fixed;
             top: 0;
@@ -69,6 +69,9 @@
             white-space: nowrap;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
             scrollbar-width: none;
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
         .category-container::-webkit-scrollbar {
             display: none;
@@ -108,6 +111,7 @@
             grid-template-columns: repeat(2, 1fr);
             gap: 8px; 
             margin-top: 10px;
+            transition: opacity 0.25s ease-in-out; /* স্মুথ ট্রানজিশন */
         }
 
         @media (min-width: 768px) {
@@ -135,7 +139,7 @@
             height: 230px; 
             object-fit: cover;
             display: block;
-            background-color: #e0e0e0; /* ছবি লোড হওয়ার আগে ব্যাকগ্রাউন্ড শো করবে যাতে সাদা না দেখায় */
+            background-color: #e0e0e0;
         }
 
         @media (min-width: 768px) {
@@ -299,7 +303,7 @@
 </head>
 <body>
 
-    <!-- প্রিলোডার স্ক্রিন -->
+    <!-- প্রিলোডার স্ক্রিন (শুধু প্রথমবার ওয়েবসাইট ওপেন হলে আসবে) -->
     <div id="preloader">
         <div class="spinner"></div>
         <p>Loading, please wait...</p>
@@ -383,14 +387,13 @@
         let currentCategory = 'all';
 
         let currentPage = 1;
-        const itemsPerPage = 16; // প্রতি পেজে ১৬টি করে আইটেম
+        const itemsPerPage = 16; 
 
         window.onload = function() {
             loadWallpapersFromFirebase();
-            trackVisitor(); // ভিজিটর কাউন্ট ট্র্যাক করার ফাংশন
+            trackVisitor(); 
         };
 
-        // ভিজিটর কাউন্ট ফাংশন
         function trackVisitor() {
             const visitorRef = database.ref('site_stats/total_visits');
             visitorRef.transaction((currentVisits) => {
@@ -403,15 +406,22 @@
                 const data = snapshot.val();
                 wallpapers = [];
                 if (data) {
-                    Object.keys(data).forEach(key => {
-                        wallpapers.push({
-                            id: key,
-                            url: data[key].url,
-                            category: data[key].category ? data[key].category.toLowerCase() : 'islamic',
-                            downloads: data[key].downloads || 0,
-                            likes: data[key].likes || 0,
-                            dislikes: data[key].dislikes || 0
-                        });
+                    Object.keys(data).forEach(categoryKey => {
+                        const categoryItems = data[categoryKey];
+                        if (categoryItems) {
+                            Object.keys(categoryItems).forEach(idKey => {
+                                const item = categoryItems[idKey];
+                                wallpapers.push({
+                                    id: idKey,
+                                    categoryFolder: categoryKey,
+                                    url: item.url,
+                                    category: item.category ? item.category.toLowerCase() : categoryKey,
+                                    downloads: item.downloads || 0,
+                                    likes: item.likes || 0,
+                                    dislikes: item.dislikes || 0
+                                });
+                            });
+                        }
                     });
                     wallpapers.reverse();
                 }
@@ -424,9 +434,8 @@
             });
         }
 
-        // ক্যাটাগরি পরিবর্তনের সময় লোডার শো করার ফাংশন
+        // ক্যাটাগরি পরিবর্তনের সময় পুরো পেজ নয়, শুধু গ্রিড স্মুথলি আপডেট হবে
         function filterCategory(category, btnElement) {
-            showPreloader();
             currentCategory = category;
             currentPage = 1;
             
@@ -434,30 +443,14 @@
             buttons.forEach(btn => btn.classList.remove('active'));
             btnElement.classList.add('active');
             
-            setTimeout(() => {
-                renderGallery();
-                hidePreloader();
-            }, 300);
+            renderGallery();
         }
 
-        // পেজ পরিবর্তনের (Next / Previous) সময় লোডার শো করার ফাংশন
+        // পেজ পরিবর্তনের সময় পুরো পেজ রিফ্রেশ না করে শুধু গ্রিড আপডেট করবে
         function changePage(direction) {
-            showPreloader();
             currentPage += direction;
-            
-            setTimeout(() => {
-                renderGallery();
-                hidePreloader();
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            }, 300);
-        }
-
-        function showPreloader() {
-            const preloader = document.getElementById('preloader');
-            if (preloader) {
-                preloader.style.display = 'flex';
-                preloader.style.opacity = '1';
-            }
+            renderGallery();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function hidePreloader() {
@@ -486,67 +479,77 @@
         function renderGallery() {
             const grid = document.getElementById('galleryGrid');
             const paginationContainer = document.getElementById('paginationContainer');
-            grid.innerHTML = '';
 
-            let filteredWallpapers = wallpapers;
-            if (currentCategory !== 'all') {
-                filteredWallpapers = wallpapers.filter(item => item.category === currentCategory);
-            }
+            // হালকা ফেড ইফেক্ট দেওয়ার জন্য অপাসিটি ০ করা
+            grid.style.opacity = '0';
 
-            if (filteredWallpapers.length === 0) {
-                grid.innerHTML = '<p style="grid-column: span 4; text-align: center; padding: 40px; color: #777;">No Wallpapers</p>';
-                paginationContainer.style.display = 'none';
-                return;
-            }
+            setTimeout(() => {
+                grid.innerHTML = '';
 
-            const totalPages = Math.ceil(filteredWallpapers.length / itemsPerPage);
-            if (currentPage > totalPages) currentPage = totalPages;
-            if (currentPage < 1) currentPage = 1;
+                let filteredWallpapers = wallpapers;
+                if (currentCategory !== 'all') {
+                    filteredWallpapers = wallpapers.filter(item => item.category === currentCategory);
+                }
 
-            const startIndex = (currentPage - 1) * itemsPerPage;
-            const endIndex = startIndex + itemsPerPage;
-            const paginatedItems = filteredWallpapers.slice(startIndex, endIndex);
+                if (filteredWallpapers.length === 0) {
+                    grid.innerHTML = '<p style="grid-column: span 4; text-align: center; padding: 40px; color: #777;">No Wallpapers</p>';
+                    paginationContainer.style.display = 'none';
+                    grid.style.opacity = '1';
+                    return;
+                }
 
-            paginatedItems.forEach((item) => {
-                const card = document.createElement('div');
-                card.className = 'wallpaper-card';
-                card.onclick = () => openModal(item.id);
+                const totalPages = Math.ceil(filteredWallpapers.length / itemsPerPage);
+                if (currentPage > totalPages) currentPage = totalPages;
+                if (currentPage < 1) currentPage = 1;
 
-                const img = document.createElement('img');
-                img.src = item.url; 
-                img.alt = 'Wallpaper';
-                img.loading = 'lazy'; // ব্রাউজার লেজি লোডিং
+                const startIndex = (currentPage - 1) * itemsPerPage;
+                const endIndex = startIndex + itemsPerPage;
+                const paginatedItems = filteredWallpapers.slice(startIndex, endIndex);
 
-                const footer = document.createElement('div');
-                footer.className = 'card-footer';
+                paginatedItems.forEach((item) => {
+                    const card = document.createElement('div');
+                    card.className = 'wallpaper-card';
+                    card.onclick = () => openModal(item.id);
 
-                const statsDiv = document.createElement('div');
-                statsDiv.className = 'card-stats';
-                statsDiv.innerHTML = `
-                    <span class="stat-item">👍 ${formatNumber(item.likes || 0)}</span>
-                    <span class="stat-item">👎 ${formatNumber(item.dislikes || 0)}</span>
-                `;
+                    const img = document.createElement('img');
+                    img.src = item.url; 
+                    img.alt = 'Wallpaper';
+                    img.loading = 'lazy';
 
-                const downloadSpan = document.createElement('span');
-                downloadSpan.className = 'download-count';
-                downloadSpan.innerHTML = `${formatNumber(item.downloads || 0)} 📥`;
+                    const footer = document.createElement('div');
+                    footer.className = 'card-footer';
 
-                footer.appendChild(statsDiv);
-                footer.appendChild(downloadSpan);
-                
-                card.appendChild(img);
-                card.appendChild(footer);
-                grid.appendChild(card);
-            });
+                    const statsDiv = document.createElement('div');
+                    statsDiv.className = 'card-stats';
+                    statsDiv.innerHTML = `
+                        <span class="stat-item">👍 ${formatNumber(item.likes || 0)}</span>
+                        <span class="stat-item">👎 ${formatNumber(item.dislikes || 0)}</span>
+                    `;
 
-            if (totalPages > 1) {
-                paginationContainer.style.display = 'flex';
-                document.getElementById('pageIndicator').innerText = `Page ${currentPage} of ${totalPages}`;
-                document.getElementById('prevBtn').disabled = currentPage === 1;
-                document.getElementById('nextBtn').disabled = currentPage === totalPages;
-            } else {
-                paginationContainer.style.display = 'none';
-            }
+                    const downloadSpan = document.createElement('span');
+                    downloadSpan.className = 'download-count';
+                    downloadSpan.innerHTML = `${formatNumber(item.downloads || 0)} 📥`;
+
+                    footer.appendChild(statsDiv);
+                    footer.appendChild(downloadSpan);
+                    
+                    card.appendChild(img);
+                    card.appendChild(footer);
+                    grid.appendChild(card);
+                });
+
+                if (totalPages > 1) {
+                    paginationContainer.style.display = 'flex';
+                    document.getElementById('pageIndicator').innerText = `Page ${currentPage} of ${totalPages}`;
+                    document.getElementById('prevBtn').disabled = currentPage === 1;
+                    document.getElementById('nextBtn').disabled = currentPage === totalPages;
+                } else {
+                    paginationContainer.style.display = 'none';
+                }
+
+                // ছবি লোড হওয়ার পর গ্রিড আবার দৃশ্যমান করা
+                grid.style.opacity = '1';
+            }, 150);
         }
 
         function openModal(id) {
@@ -605,7 +608,7 @@
                 userInteractions[currentActiveId] = 'like';
             }
 
-            database.ref('wallpapers/' + currentActiveId).update({
+            database.ref('wallpapers/' + item.categoryFolder + '/' + currentActiveId).update({
                 likes: newLikes,
                 dislikes: newDislikes
             });
@@ -633,7 +636,7 @@
                 userInteractions[currentActiveId] = 'dislike';
             }
 
-            database.ref('wallpapers/' + currentActiveId).update({
+            database.ref('wallpapers/' + item.categoryFolder + '/' + currentActiveId).update({
                 likes: newLikes,
                 dislikes: newDislikes
             });
@@ -646,7 +649,8 @@
             const item = wallpapers.find(w => w.id === currentActiveId);
             if (item) {
                 let newDownloads = (item.downloads || 0) + 1;
-                database.ref('wallpapers/' + currentActiveId).update({
+                
+                database.ref('wallpapers/' + item.categoryFolder + '/' + currentActiveId).update({
                     downloads: newDownloads
                 });
 
