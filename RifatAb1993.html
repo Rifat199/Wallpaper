@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>অ্যাডমিন আপলোড প্যানেল ও রিপোর্ট</title>
+    <title>অ্যাডমিন আপলোড প্যানেল ও অটো-ট্যাগ সিস্টেম</title>
     
     <!-- ফায়ারবেস SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -46,6 +46,7 @@
             display: block;
             margin-bottom: 5px;
             font-weight: bold;
+            font-size: 14px;
         }
         .form-group input, .form-group select {
             width: 100%;
@@ -96,7 +97,6 @@
             background: #c0392b;
         }
 
-        /* অ্যানালিটিক্স রিপোর্ট বক্সের স্টাইল */
         .report-box {
             margin-top: 25px;
             background: #2c3e50;
@@ -138,15 +138,14 @@
 
     <div class="admin-box" id="panelBox" style="display: none;">
         <button class="logout-btn" onclick="logoutAdmin()">লগআউট</button>
-        <h2>অ্যাডমিন প্যানেল</h2>
+        <h2>অ্যাডমিন প্যানেল (অটো-ট্যাগ)</h2>
         <div class="form-group">
             <label for="apiKey">ImgBB API Key:</label>
             <input type="text" id="apiKey" value="32f9578ec23b3aeeaf05e3d062cb2132">
         </div>
         
-        <!-- ক্যাটাগরি সিলেক্ট করার ড্রপডাউন -->
         <div class="form-group">
-            <label for="wallpaperCategory">ক্যাটাগরি সিলেক্ট করুন:</label>
+            <label for="wallpaperCategory">১. মূল ক্যাটাগরি সিলেক্ট করুন:</label>
             <select id="wallpaperCategory">
                 <option value="islamic">Islamic</option>
                 <option value="hindu">Hindu</option>
@@ -161,14 +160,26 @@
             </select>
         </div>
 
+        <!-- নতুন সাব-টাইপ ড্রপডাউন: GIF, 3D, 4K ইত্যাদি -->
         <div class="form-group">
-            <label for="imageFile">ওয়ালপেপার সিলেক্ট করুন:</label>
+            <label for="wallpaperSubType">২. ওয়ালপেপারের ধরণ (Sub-Type):</label>
+            <select id="wallpaperSubType">
+                <option value="hd">HD / Normal</option>
+                <option value="3d">3D Wallpaper</option>
+                <option value="4k">4K Ultra HD</option>
+                <option value="gif">GIF / Animated</option>
+                <option value="art">Artistic / Painting</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="imageFile">৩. ওয়ালপেপার ছবি সিলেক্ট করুন:</label>
             <input type="file" id="imageFile" accept="image/*">
         </div>
-        <button class="btn" onclick="uploadWallpaper()">সরাসরি আপলোড করুন</button>
+        
+        <button class="btn" onclick="uploadWallpaper()">অটো-ট্যাগসহ আপলোড করুন</button>
         <p id="uploadStatus"></p>
 
-        <!-- লাইভ রিপোর্ট ও অ্যানালিটিক্স সেকশন -->
         <div class="report-box">
             <h3>📊 সাইট ও ফটো রিপোর্ট</h3>
             <div class="report-item">
@@ -219,7 +230,6 @@
             document.getElementById('loginStatus').innerText = '';
         }
 
-        // ফায়ারবেস কনফিগারেশন
         const firebaseConfig = {
             apiKey: "AIzaSyBmW8LE1Z22u4NiFtkTkU7SJtOZhy4tQLik",
             authDomain: "wallpaper-76b9a.firebaseapp.com",
@@ -233,7 +243,6 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // অ্যাডমিন প্যানেলে লাইভ রিপোর্ট দেখানোর ফাংশন (মেইন কোডের ডেটা স্ট্রাকচার অনুযায়ী হিসাব করবে)
         function loadAdminReports() {
             database.ref('site_stats/total_visits').on('value', (snapshot) => {
                 const visits = snapshot.val() || 0;
@@ -252,7 +261,6 @@
                 let maxDownloads = -1;
                 let topItemName = 'নেই';
 
-                // সব ক্যাটাগরি ফোল্ডার লুপ চালিয়ে হিসাব করা
                 Object.keys(data).forEach(categoryKey => {
                     let categoryItems = data[categoryKey];
                     if (categoryItems) {
@@ -274,9 +282,40 @@
             });
         }
 
+        // ক্যাটাগরি ও সাব-টাইপ অনুযায়ী স্বয়ংক্রিয়ভাবে রিচ এসইও কিওয়ার্ড ট্যাগ জেনারেট করার ফাংশন
+        function generateAutoTags(category, subType) {
+            let baseKeywords = {
+                islamic: "islamic wallpaper, muslim background, allah arabic calligraphy, madina makkah kaaba, mosque architecture, quranic ayat, ramadan eid images",
+                hindu: "hindu god wallpaper, shiva mahadev, radha krishna, hanuman bajrangbali, mandir divine background, durga puja festival",
+                christian: "christian wallpaper, jesus christ cross, bible verse background, church chapel holy spirit, cross glowing art",
+                buddhist: "buddhist wallpaper, buddha statue peace, meditation temple zen, calm spiritual background",
+                nature: "nature landscape wallpaper, green forest mountains, beautiful river water stream, waterfall scenery, sunrise sunset outdoors",
+                flowers: "flower wallpaper, red rose bouquet, colorful garden blossom, spring floral background, sunflower macro",
+                buildings: "architecture building wallpaper, modern skyscraper, ancient palace structure, futuristic engineering design",
+                love: "love wallpaper, romantic couple heart, red roses valentine, sweet moments background",
+                animals: "wild animals wallpaper, cute pets cats dogs, majestic lion tiger wildlife, birds in sky",
+                cityscapes: "cityscape night lights, urban metropolis skyline, downtown street view towers, glowing neon city"
+            };
+
+            let subKeywords = {
+                hd: "high definition mobile wallpaper, stock photo, clear background",
+                "3d": "3d wallpaper, dimensional depth effect, perspective art, illusion background",
+                "4k": "4k ultra hd resolution, high quality sharp details, desktop mobile background",
+                gif: "gif animated moving effect, live animation style, looping motion picture",
+                art: "artistic painting style, digital illustration, creative graphic design"
+            };
+
+            let catTags = baseKeywords[category] || category;
+            let subTags = subKeywords[subType] || "";
+
+            // সব ট্যাগ একসাথে যুক্ত করে দেওয়া হচ্ছে যাতে সার্চ বক্সে যেকোনো কিওয়ার্ড লিখলে ম্যাচ করে
+            return `${category} ${subType} ${catTags}, ${subTags}, best mobile wallpaper, free download`;
+        }
+
         async function uploadWallpaper() {
             const apiKeyInput = document.getElementById('apiKey').value.trim();
             const categoryInput = document.getElementById('wallpaperCategory').value;
+            const subTypeInput = document.getElementById('wallpaperSubType').value;
             const fileInput = document.getElementById('imageFile').files[0];
             const statusText = document.getElementById('uploadStatus');
 
@@ -290,7 +329,7 @@
             }
 
             statusText.style.color = '#f1c40f';
-            statusText.innerText = 'আপলোড হচ্ছে, অপেক্ষা করুন...';
+            statusText.innerText = 'ছবি আপলোড ও অটো-ট্যাগ প্রসেসিং চলছে...';
 
             const formData = new FormData();
             formData.append('image', fileInput);
@@ -305,17 +344,21 @@
                 if (data.success) {
                     const imageUrl = data.data.url;
                     
-                    // মেইন কোডের কাঠামোর সাথে মিল রেখে ক্যাটাগরি ফোল্ডারের ভেতরে ডাটা পাঠানো হচ্ছে
+                    // এখানে স্বয়ংক্রিয়ভাবে ট্যাগ জেনারেট করে টাইটেল ফিল্ডে সেভ করা হচ্ছে
+                    const generatedTags = generateAutoTags(categoryInput, subTypeInput);
+
+                    // ফায়ারবেসে ডাটা পাঠানো হচ্ছে
                     database.ref('wallpapers/' + categoryInput).push({
                         url: imageUrl,
                         category: categoryInput,
+                        title: generatedTags, // অটো-জেনোরেটেড ট্যাগগুলো এখানে সেভ হলো
                         downloads: 0,
                         likes: 0,
                         dislikes: 0
                     });
 
                     statusText.style.color = '#2ecc71';
-                    statusText.innerText = 'সফলভাবে আপলোড হয়েছে!';
+                    statusText.innerText = 'সফলভাবে আপলোড এবং অটো-ট্যাগ যুক্ত হয়েছে!';
                     document.getElementById('imageFile').value = '';
                 } else {
                     statusText.style.color = '#e74c3c';
