@@ -1,13 +1,22 @@
 <!DOCTYPE html>
 <html lang="bn">
 <head>
-    
-    
     <meta name="monetag" content="5134fb994398d7851211d87f7cd233cb">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wallpaper</title>
     
+    <!-- এসইও এবং সার্চ ইঞ্জিন অপ্টিমাইজেশন (SEO Meta Tags) -->
+    <title>Wallpaper Gallery - Best HD, 4K, 3D & Mobile Wallpapers Download</title>
+    <meta name="description" content="Download free high-quality HD, 4K, 3D, and GIF wallpapers. Explore best categories including Islamic, Hindu, Christian, Buddhist, Nature, Flowers, Buildings, Love, Animals, and Cityscapes for mobile and desktop.">
+    <meta name="keywords" content="wallpaper, HD wallpaper, 4K wallpaper, mobile wallpaper, background images, free wallpaper download, islamic wallpaper, hindu wallpaper, christian wallpaper, buddhist wallpaper, nature wallpaper, flower wallpaper, love wallpaper, animal wallpaper, cityscape wallpaper, 3d wallpaper, gif wallpaper, desktop background, phone wallpaper, best photo gallery">
+    <meta name="author" content="Wallpaper Gallery">
+    
+    <!-- Open Graph / Social Media Meta Tags -->
+    <meta property="og:title" content="Wallpaper Gallery - Best HD & 4K Wallpapers">
+    <meta property="og:description" content="Explore and download stunning high-definition, 3D and mobile wallpapers for your devices.">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Wallpaper Gallery">
+
     <!-- ফায়ারবেস SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -24,7 +33,6 @@
             color: #333;
         }
 
-        /* প্রিলোডার স্ক্রিন ডিজাইন (শুধু একদম প্রথম লোডের জন্য) */
         #preloader {
             position: fixed;
             top: 0;
@@ -62,7 +70,43 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
 
-        /* ক্যাটাগরি ফিল্টার বার */
+        /* সার্চ বক্স ডিজাইন */
+        .search-container {
+            background: #1b4d3e;
+            padding: 0 15px 15px 15px;
+            display: flex;
+            justify-content: center;
+        }
+        .search-box {
+            width: 100%;
+            max-width: 600px;
+            display: flex;
+            background: white;
+            border-radius: 30px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .search-input {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            outline: none;
+            font-size: 14px;
+            color: #333;
+        }
+        .search-btn {
+            background: #14382c;
+            color: white;
+            border: none;
+            padding: 0 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+        .search-btn:hover {
+            background: #0d251d;
+        }
+
         .category-container {
             background: #fff;
             padding: 10px 15px;
@@ -114,7 +158,7 @@
             grid-template-columns: repeat(2, 1fr);
             gap: 8px; 
             margin-top: 10px;
-            transition: opacity 0.25s ease-in-out; /* স্মুথ ট্রানজিশন */
+            transition: opacity 0.25s ease-in-out;
         }
 
         @media (min-width: 768px) {
@@ -183,7 +227,6 @@
             gap: 4px;
         }
 
-        /* পেজিনেশন বাটন ডিজাইন */
         .pagination-container {
             display: flex;
             justify-content: center;
@@ -229,7 +272,6 @@
             color: #555;
         }
 
-        /* Lightbox Modal */
         .modal {
             display: none;
             position: fixed;
@@ -306,7 +348,6 @@
 </head>
 <body>
 
-    <!-- প্রিলোডার স্ক্রিন (শুধু প্রথমবার ওয়েবসাইট ওপেন হলে আসবে) -->
     <div id="preloader">
         <div class="spinner"></div>
         <p>Loading, please wait...</p>
@@ -316,7 +357,14 @@
         <p>Wallpaper Gallery</p>
     </header>
 
-    <!-- ক্যাটাগরি ফিল্টার বাটন বার -->
+    <!-- সার্চ বার সেকশন -->
+    <div class="search-container">
+        <div class="search-box">
+            <input type="text" id="searchInput" class="search-input" placeholder="Search wallpapers (e.g. 4K, HD, 3D, Islamic, Nature)..." onkeyup="handleSearchInput(event)">
+            <button class="search-btn" onclick="performSearch()">Search</button>
+        </div>
+    </div>
+
     <div class="category-container" id="categoryContainer">
         <button class="category-btn active" onclick="filterCategory('all', this)">All</button>
         <button class="category-btn" onclick="filterCategory('islamic', this)">Islamic</button>
@@ -332,11 +380,8 @@
     </div>
 
     <div class="container">
-        <div class="gallery-grid" id="galleryGrid">
-            <!-- জাভাস্ক্রিপ্ট দিয়ে ছবিগুলো এখানে লোড হবে -->
-        </div>
+        <div class="gallery-grid" id="galleryGrid"></div>
 
-        <!-- পেজিনেশন কন্ট্রোল -->
         <div class="pagination-container" id="paginationContainer" style="display: none;">
             <button class="page-btn" id="prevBtn" onclick="changePage(-1)">
                 <span>&#10094;</span> Previous
@@ -348,7 +393,6 @@
         </div>
     </div>
 
-    <!-- লাইটবক্স মডাল -->
     <div class="modal" id="imageModal">
         <span class="close-btn" onclick="closeModal()">&times;</span>
         <div class="modal-content">
@@ -368,7 +412,6 @@
     </div>
 
     <script>
-        // ফায়ারবেস কনফিগারেশন
         const firebaseConfig = {
             apiKey: "AIzaSyBmW8LE1Z22u4NiFtkTkU7SJtOZhy4tQLik",
             authDomain: "wallpaper-76b9a.firebaseapp.com",
@@ -388,6 +431,7 @@
         let currentActiveId = '';
         let isFirstLoad = true;
         let currentCategory = 'all';
+        let searchQuery = '';
 
         let currentPage = 1;
         const itemsPerPage = 16; 
@@ -419,6 +463,7 @@
                                     categoryFolder: categoryKey,
                                     url: item.url,
                                     category: item.category ? item.category.toLowerCase() : categoryKey,
+                                    title: item.title ? item.title.toLowerCase() : '',
                                     downloads: item.downloads || 0,
                                     likes: item.likes || 0,
                                     dislikes: item.dislikes || 0
@@ -437,19 +482,37 @@
             });
         }
 
-        // ক্যাটাগরি পরিবর্তনের সময় পুরো পেজ নয়, শুধু গ্রিড স্মুথলি আপডেট হবে
         function filterCategory(category, btnElement) {
             currentCategory = category;
+            searchQuery = '';
+            document.getElementById('searchInput').value = '';
             currentPage = 1;
             
             const buttons = document.querySelectorAll('.category-btn');
             buttons.forEach(btn => btn.classList.remove('active'));
-            btnElement.classList.add('active');
+            if (btnElement) btnElement.classList.add('active');
             
             renderGallery();
         }
 
-        // পেজ পরিবর্তনের সময় পুরো পেজ রিফ্রেশ না করে শুধু গ্রিড আপডেট করবে
+        function handleSearchInput(event) {
+            if (event.key === 'Enter') {
+                performSearch();
+            }
+        }
+
+        function performSearch() {
+            const inputVal = document.getElementById('searchInput').value.trim().toLowerCase();
+            searchQuery = inputVal;
+            currentPage = 1;
+
+            if (searchQuery !== '') {
+                const buttons = document.querySelectorAll('.category-btn');
+                buttons.forEach(btn => btn.classList.remove('active'));
+            }
+            renderGallery();
+        }
+
         function changePage(direction) {
             currentPage += direction;
             renderGallery();
@@ -467,15 +530,9 @@
         }
 
         function formatNumber(num) {
-            if (num >= 10000000) {
-                return (num / 10000000).toFixed(1).replace(/\.0$/, '') + ' Cr';
-            }
-            if (num >= 100000) {
-                return (num / 100000).toFixed(1).replace(/\.0$/, '') + ' L';
-            }
-            if (num >= 1000) {
-                return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
-            }
+            if (num >= 10000000) return (num / 10000000).toFixed(1).replace(/\.0$/, '') + ' Cr';
+            if (num >= 100000) return (num / 100000).toFixed(1).replace(/\.0$/, '') + ' L';
+            if (num >= 1000) return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
             return num;
         }
 
@@ -483,19 +540,25 @@
             const grid = document.getElementById('galleryGrid');
             const paginationContainer = document.getElementById('paginationContainer');
 
-            // হালকা ফেড ইফেক্ট দেওয়ার জন্য অপাসিটি ০ করা
             grid.style.opacity = '0';
 
             setTimeout(() => {
                 grid.innerHTML = '';
 
                 let filteredWallpapers = wallpapers;
-                if (currentCategory !== 'all') {
+                
+                if (searchQuery !== '') {
+                    filteredWallpapers = wallpapers.filter(item => 
+                        item.category.includes(searchQuery) || 
+                        item.categoryFolder.toLowerCase().includes(searchQuery) ||
+                        item.title.includes(searchQuery)
+                    );
+                } else if (currentCategory !== 'all') {
                     filteredWallpapers = wallpapers.filter(item => item.category === currentCategory);
                 }
 
                 if (filteredWallpapers.length === 0) {
-                    grid.innerHTML = '<p style="grid-column: span 4; text-align: center; padding: 40px; color: #777;">No Wallpapers</p>';
+                    grid.innerHTML = '<p style="grid-column: span 4; text-align: center; padding: 40px; color: #777;">No Wallpapers Found</p>';
                     paginationContainer.style.display = 'none';
                     grid.style.opacity = '1';
                     return;
@@ -550,7 +613,6 @@
                     paginationContainer.style.display = 'none';
                 }
 
-                // ছবি লোড হওয়ার পর গ্রিড আবার দৃশ্যমান করা
                 grid.style.opacity = '1';
             }, 150);
         }
@@ -656,8 +718,6 @@
                 database.ref('wallpapers/' + item.categoryFolder + '/' + currentActiveId).update({
                     downloads: newDownloads
                 });
-
-                // বিজ্ঞাপন বা অন্য লিংকে রিডাইরেক্ট করার কোডটি এখান থেকে সফলভাবে বাদ দেওয়া হয়েছে।
 
                 fetch(currentActiveUrl)
                     .then(response => response.blob())
