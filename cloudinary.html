@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>অ্যাডমিন প্যানেল - ওয়ালপেপার ম্যানেজমেন্ট</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: linear-gradient(135deg, #1e272e, #2c3e50); color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+        .admin-box { background: rgba(44, 62, 80, 0.85); backdrop-filter: blur(12px); padding: 30px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 100%; max-width: 580px; border: 1px solid rgba(255, 255, 255, 0.1); }
+        .admin-box h2 { margin-bottom: 25px; text-align: center; color: #00d2d3; font-size: 24px; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px; color: #dfe4ea; }
+        .form-group input, .form-group select { width: 100%; padding: 12px 15px; border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 8px; background: rgba(30, 39, 46, 0.8); color: white; font-size: 14px; }
+        .btn { background: linear-gradient(135deg, #00d2d3, #01a3a4); color: white; padding: 14px; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-size: 16px; font-weight: bold; margin-top: 5px; }
+        .sub-list-box { background: rgba(30, 39, 46, 0.6); padding: 10px; border-radius: 8px; margin-top: 10px; max-height: 220px; overflow-y: auto; }
+        .sub-item { display: flex; justify-content: space-between; align-items: center; font-size: 14px; padding: 8px 10px; margin-bottom: 6px; background: rgba(255, 255, 255, 0.03); border-radius: 6px; }
+        .sub-item-info { display: flex; align-items: center; gap: 10px; }
+        .sub-item img { width: 35px; height: 35px; border-radius: 4px; object-fit: cover; }
+        .action-btns { display: flex; gap: 6px; }
+        .edit-btn { background: #e58e26 !important; border: none; padding: 6px 10px; color: white; border-radius: 5px; cursor: pointer; }
+        .delete-btn { background: #ff5252 !important; border: none; padding: 6px 10px; color: white; border-radius: 5px; cursor: pointer; }
+        .report-box { margin-top: 30px; background: rgba(30, 39, 46, 0.7); padding: 18px; border-radius: 10px; }
+        .report-item { display: flex; justify-content: space-between; margin-bottom: 10px; border-bottom: 1px dashed rgba(255,255,255,0.1); }
+        
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 999; }
+        .modal-content { background: #2f3640; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; }
+        .modal-btns { display: flex; gap: 10px; margin-top: 15px; }
+    </style>
+</head>
+<body>
+
+    <div class="admin-box">
+        <h2>🌙 ওয়ালপেপার অ্যাডমিন প্যানেল</h2>
+        
+        <div class="form-group">
+            <label for="wallpaperCategory">১. মূল ক্যাটাগরি:</label>
+            <select id="wallpaperCategory" onchange="loadSubCategories()">
+                <option value="islamic">Islamic</option>
+                <option value="hindu">Hindu</option>
+                <option value="christian">Christian</option>
+                <option value="buddhist">Buddhist</option>
+                <option value="nature">Nature</option>
+                <option value="flowers">Flowers</option>
+                <option value="buildings">Buildings</option>
+                <option value="love">Love</option>
+                <option value="animals">Animals</option>
+                <option value="cityscapes">Cityscapes</option>
+            </select>
+        </div>
+
+        <div class="form-group" style="background: rgba(30, 39, 46, 0.5); padding: 15px; border-radius: 10px;">
+            <label>নতুন সাব-ক্যাটাগরি কার্ড যোগ করুন:</label>
+            <input type="text" id="newSubName" placeholder="কার্ডের নাম" style="margin-bottom: 10px;">
+            <input type="file" id="newSubImage" accept="image/*" style="margin-bottom: 12px;">
+            <button class="btn" onclick="addSubCategory()">সাব-ক্যাটাগরি যোগ করুন</button>
+            <div class="sub-list-box" id="subCategoryList"></div>
+        </div>
+        
+        <div class="form-group">
+            <label for="wallpaperSubType">২. কার্ড সিলেক্ট করুন:</label>
+            <select id="wallpaperSubType"></select>
+        </div>
+        
+        <div class="form-group">
+            <label for="imageFile">৩. ওয়ালপেপার ছবি:</label>
+            <input type="file" id="imageFile" accept="image/*" multiple>
+        </div>
+        
+        <button class="btn" id="uploadBtn" onclick="uploadWallpaper()">ছবি আপলোড করুন</button>
+        <p id="uploadStatus" style="margin-top: 15px; text-align: center; font-size: 13px; color: #00d2d3;"></p>
+
+        <div class="report-box">
+            <h3>📊 সাইট ও ফটো রিপোর্ট</h3>
+            <div class="report-item"><span>মোট ভিউ:</span><span id="totalVisitsCount">০</span></div>
+            <div class="report-item"><span>মোট ছবি:</span><span id="totalWallpapersCount">০</span></div>
+            <div class="report-item"><span>সেরা ডাউনলোড:</span><span id="topDownloadedCount">০</span></div>
+        </div>
+    </div>
+
+    <!-- এডিট মডাল -->
+    <div class="modal-overlay" id="editModal">
+        <div class="modal-content">
+            <h3>কার্ড এডিট করুন</h3>
+            <input type="text" id="editSubNameInput" style="margin-top:10px;">
+            <input type="file" id="editSubImageInput" accept="image/*" style="margin-top:10px;">
+            <div class="modal-btns">
+                <button class="btn" onclick="closeEditModal()">বাতিল</button>
+                <button class="btn" onclick="saveEditSubCategory()">আপডেট করুন</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBmW8LE1Z22u4NiFtkTkU7SJtOZhy4tQLik",
+            authDomain: "wallpaper-76b9a.firebaseapp.com",
+            databaseURL: "https://wallpaper-76b9a-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "wallpaper-76b9a",
+            storageBucket: "wallpaper-76b9a.firebasestorage.app",
+            messagingSenderId: "717212155948",
+            appId: "1:717212155948:web:d20a8a7286e4b98f4f1189"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const CLOUD_NAME = "yspr3dyu";
+        const UPLOAD_PRESET = "wallpaper_preset";
+
+        let currentEditingKey = null;
+
+        async function uploadToCloudinary(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', UPLOAD_PRESET);
+            const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method: 'POST', body: formData });
+            const data = await res.json();
+            return data.secure_url;
+        }
+
+        async function addSubCategory() {
+            const mainCat = document.getElementById('wallpaperCategory').value;
+            const subName = document.getElementById('newSubName').value.trim();
+            const imageFile = document.getElementById('newSubImage').files[0];
+            if (!subName) return alert('নাম লিখুন!');
+            let imageUrl = imageFile ? await uploadToCloudinary(imageFile) : '';
+            database.ref(`subcategories/${mainCat}`).push({ name: subName, image: imageUrl });
+            loadSubCategories();
+        }
+
+        async function uploadWallpaper() {
+            const mainCat = document.getElementById('wallpaperCategory').value;
+            const subType = document.getElementById('wallpaperSubType').value;
+            const files = document.getElementById('imageFile').files;
+            for (let file of files) {
+                const url = await uploadToCloudinary(file);
+                database.ref('wallpapers/' + mainCat).push({ url, subType, downloads: 0 });
+            }
+            alert('আপলোড সম্পন্ন!');
+            loadAdminReports();
+        }
+
+        function loadSubCategories() {
+            const mainCat = document.getElementById('wallpaperCategory').value;
+            database.ref(`subcategories/${mainCat}`).on('value', (snap) => {
+                const subSelect = document.getElementById('wallpaperSubType');
+                const subList = document.getElementById('subCategoryList');
+                subSelect.innerHTML = ''; subList.innerHTML = '';
+                snap.forEach(child => {
+                    const data = child.val();
+                    const key = child.key;
+                    subSelect.innerHTML += `<option value="${data.name}">${data.name}</option>`;
+                    subList.innerHTML += `<div class="sub-item">
+                        <div class="sub-item-info"><img src="${data.image}"><span>${data.name}</span></div>
+                        <div class="action-btns">
+                            <button class="edit-btn" onclick="openEditModal('${key}', '${data.name}')">এডিট</button>
+                            <button class="delete-btn" onclick="deleteSubCategory('${key}')">ডিলিট</button>
+                        </div>
+                    </div>`;
+                });
+            });
+        }
+
+        function openEditModal(key, name) {
+            currentEditingKey = key;
+            document.getElementById('editSubNameInput').value = name;
+            document.getElementById('editModal').style.display = 'flex';
+        }
+
+        function closeEditModal() { document.getElementById('editModal').style.display = 'none'; }
+
+        async function saveEditSubCategory() {
+            const mainCat = document.getElementById('wallpaperCategory').value;
+            const newName = document.getElementById('editSubNameInput').value;
+            database.ref(`subcategories/${mainCat}/${currentEditingKey}`).update({ name: newName });
+            closeEditModal();
+        }
+
+        function deleteSubCategory(key) {
+            const mainCat = document.getElementById('wallpaperCategory').value;
+            database.ref(`subcategories/${mainCat}/${key}`).remove();
+        }
+
+        function loadAdminReports() {
+            database.ref('totalVisits').on('value', s => document.getElementById('totalVisitsCount').innerText = s.val() || 0);
+            database.ref('wallpapers').on('value', s => {
+                let total = 0, max = 0;
+                s.forEach(c => { total += c.numChildren(); });
+                document.getElementById('totalWallpapersCount').innerText = total;
+            });
+        }
+
+        window.onload = () => { loadSubCategories(); loadAdminReports(); };
+    </script>
+</body>
+</html>
