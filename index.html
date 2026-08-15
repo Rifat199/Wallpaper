@@ -5,19 +5,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <!-- এসইও এবং সার্চ ইঞ্জিন অপ্টিমাইজেশন (SEO Meta Tags) -->
     <title>Wallpaper Gallery - Best HD, 4K, 3D & Mobile Wallpapers Download</title>
     <meta name="description" content="Download free high-quality HD, 4K, 3D, and GIF wallpapers. Explore best categories including Islamic, Hindu, Christian, Buddhist, Nature, Flowers, Buildings, Love, Animals, and Cityscapes for mobile and desktop.">
-    <meta name="keywords" content="wallpaper, HD wallpaper, 4K wallpaper, mobile wallpaper, background images, free wallpaper download, islamic wallpaper, hindu wallpaper, christian wallpaper, buddhist wallpaper, nature wallpaper, flower wallpaper, love wallpaper, animal wallpaper, cityscape wallpaper, 3d wallpaper, gif wallpaper, desktop background, phone wallpaper, best photo gallery">
     <meta name="author" content="Wallpaper Gallery">
     
-    <!-- Open Graph / Social Media Meta Tags -->
-    <meta property="og:title" content="Wallpaper Gallery - Best HD & 4K Wallpapers">
-    <meta property="og:description" content="Explore and download stunning high-definition, 3D and mobile wallpapers for your devices.">
-    <meta property="og:type" content="website">
-    <meta property="og:site_name" content="Wallpaper Gallery">
-
-    <!-- ফায়ারবেস SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
@@ -27,6 +18,7 @@
             padding: 0;
             box-sizing: border-box;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            -webkit-tap-highlight-color: transparent;
         }
         body {
             background-color: #f4f7f6;
@@ -62,51 +54,6 @@
             100% { transform: rotate(360deg); }
         }
 
-        header {
-            background: #1b4d3e;
-            color: white;
-            padding: 10px;
-            text-align: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-
-        /* সার্চ বক্স ডিজাইন */
-        .search-container {
-            background: #1b4d3e;
-            padding: 0 15px 15px 15px;
-            display: flex;
-            justify-content: center;
-        }
-        .search-box {
-            width: 100%;
-            max-width: 600px;
-            display: flex;
-            background: white;
-            border-radius: 30px;
-            overflow: hidden;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-        .search-input {
-            flex: 1;
-            padding: 12px 20px;
-            border: none;
-            outline: none;
-            font-size: 14px;
-            color: #333;
-        }
-        .search-btn {
-            background: #14382c;
-            color: white;
-            border: none;
-            padding: 0 20px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: background 0.2s;
-        }
-        .search-btn:hover {
-            background: #0d251d;
-        }
-
         .category-container {
             background: #fff;
             padding: 10px 15px;
@@ -116,9 +63,8 @@
             white-space: nowrap;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
             scrollbar-width: none;
-            position: sticky;
-            top: 0;
-            z-index: 100;
+            margin-bottom: 20px;
+            scroll-behavior: smooth;
         }
         .category-container::-webkit-scrollbar {
             display: none;
@@ -147,23 +93,145 @@
             box-shadow: 0 2px 4px rgba(27, 77, 62, 0.3);
         }
 
+        .img-container {
+            position: relative;
+            width: 100%;
+            background-color: #e0e0e0;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .subcat-card .img-container {
+            height: 140px;
+        }
+        @media (min-width: 768px) {
+            .subcat-card .img-container {
+                height: 180px;
+            }
+        }
+        .wallpaper-card .img-container {
+            height: 140px;
+        }
+        @media (min-width: 768px) {
+            .wallpaper-card .img-container {
+                height: 250px;
+            }
+        }
+
+        .card-spinner {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(27, 77, 62, 0.2);
+            border-top: 3px solid #1b4d3e;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            z-index: 1;
+        }
+
+        .img-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            position: relative;
+            z-index: 2;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .img-container img.loaded {
+            opacity: 1;
+        }
+
         .container {
             max-width: 1200px;
             margin: 20px auto;
             padding: 0 15px;
         }
 
-        .gallery-grid {
+        .gallery-main-title {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #ffffff;
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            background: linear-gradient(135deg, #1b4d3e, #2e7d63);
+            padding: 12px 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(27, 77, 62, 0.2);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
+        }
+
+        @media (min-width: 768px) {
+            .gallery-main-title {
+                font-size: 26px;
+                padding: 16px 25px;
+                letter-spacing: 1px;
+            }
+        }
+
+        .subcategories-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        @media (min-width: 768px) {
+            .subcategories-grid {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 15px;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .subcategories-grid {
+                grid-template-columns: repeat(5, 1fr);
+                gap: 15px;
+            }
+        }
+
+        .subcat-card {
+            background: #ffffff;
+            border-radius: 10px;
+            overflow: hidden;
+            text-align: center;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #e0e0e0;
+            position: relative;
+        }
+        .subcat-card:active {
+            transform: scale(0.96);
+        }
+        
+        .subcat-title-overlay {
+            padding: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            color: #333;
+            background: #fff;
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
             gap: 8px; 
             margin-top: 10px;
-            transition: opacity 0.25s ease-in-out;
         }
 
         @media (min-width: 768px) {
             .gallery-grid {
-                grid-template-columns: repeat(4, 1fr); 
+                grid-template-columns: repeat(5, 1fr); 
                 gap: 15px;
             }
         }
@@ -178,98 +246,27 @@
             display: flex;
             flex-direction: column;
         }
-        .wallpaper-card:hover {
-            transform: translateY(-5px);
-        }
-        .wallpaper-card img {
-            width: 100%;
-            height: 230px; 
-            object-fit: cover;
-            display: block;
-            background-color: #e0e0e0;
-        }
-
-        @media (min-width: 768px) {
-            .wallpaper-card img {
-                height: 280px; 
-            }
+        .wallpaper-card:active {
+            transform: scale(0.96);
         }
 
         .card-footer {
-            padding: 8px 10px;
+            padding: 5px 6px;
             background: #fff;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 13px;
+            font-size: 10px;
             color: #555;
             border-top: 1px solid #eee;
         }
-
         .card-stats {
             display: flex;
-            gap: 8px;
+            gap: 2px;
         }
-
-        .stat-item {
-            display: flex;
-            align-items: center;
-            gap: 3px;
-            font-size: 12px;
-            color: #555;
-        }
-
         .download-count {
             font-weight: bold;
             color: #1b4d3e;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .pagination-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 15px;
-            margin: 30px 0;
-        }
-
-        .page-btn {
-            background: #fff;
-            border: 1px solid #ddd;
-            color: #1b4d3e;
-            padding: 10px 22px;
-            border-radius: 30px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            transition: all 0.2s ease;
-        }
-
-        .page-btn:hover:not(:disabled) {
-            background: #1b4d3e;
-            color: white;
-            border-color: #1b4d3e;
-            transform: translateY(-2px);
-        }
-
-        .page-btn:disabled {
-            background: #f9f9f9;
-            color: #ccc;
-            border-color: #eee;
-            cursor: not-allowed;
-            box-shadow: none;
-        }
-
-        #pageIndicator {
-            font-weight: 600;
-            font-size: 14px;
-            color: #555;
         }
 
         .modal {
@@ -290,9 +287,6 @@
             max-height: 70vh;
             border-radius: 5px;
         }
-        .modal-content {
-            text-align: center;
-        }
         .close-btn {
             position: absolute;
             top: 20px;
@@ -302,44 +296,37 @@
             font-weight: bold;
             cursor: pointer;
         }
-
         .modal-actions {
             display: flex;
             gap: 15px;
             justify-content: center;
             margin-top: 15px;
         }
-
         .modal-action-btn {
             background: rgba(255, 255, 255, 0.15);
             border: 1px solid rgba(255, 255, 255, 0.3);
             cursor: pointer;
-            font-size: 20px;
+            font-size: 16px;
             color: white;
+            padding: 10px 18px;
+            border-radius: 30px;
             display: flex;
             align-items: center;
             gap: 5px;
-            padding: 10px 18px;
-            border-radius: 30px;
-            transition: background 0.2s, transform 0.1s;
-            text-decoration: none;
+            transition: background 0.1s;
         }
-
-        .modal-action-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: scale(1.05);
+        .modal-action-btn:active {
+            transform: scale(0.88);
+            background: rgba(255, 255, 255, 0.4);
         }
-
         .modal-action-btn.active-like {
             background: #27ae60;
             border-color: #27ae60;
         }
-
         .modal-action-btn.active-dislike {
             background: #c0392b;
             border-color: #c0392b;
         }
-
         .btn-count {
             font-size: 14px;
             font-weight: bold;
@@ -353,49 +340,33 @@
         <p>Loading, please wait...</p>
     </div>
 
-    <header>
-        <p>Wallpaper Gallery</p>
-    </header>
-
-    <!-- সার্চ বার সেকশন -->
-    <div class="search-container">
-        <div class="search-box">
-            <input type="text" id="searchInput" class="search-input" placeholder="Search wallpapers (e.g. 4K, HD, 3D, Islamic, Nature)..." onkeyup="handleSearchInput(event)">
-            <button class="search-btn" onclick="performSearch()">Search</button>
-        </div>
-    </div>
-
-    <div class="category-container" id="categoryContainer">
-        <button class="category-btn active" onclick="filterCategory('all', this)">All</button>
-        <button class="category-btn" onclick="filterCategory('islamic', this)">Islamic</button>
-        <button class="category-btn" onclick="filterCategory('hindu', this)">Hindu</button>
-        <button class="category-btn" onclick="filterCategory('christian', this)">Christian</button>
-        <button class="category-btn" onclick="filterCategory('buddhist', this)">Buddhist</button>
-        <button class="category-btn" onclick="filterCategory('nature', this)">Nature</button>
-        <button class="category-btn" onclick="filterCategory('flowers', this)">Flowers</button>
-        <button class="category-btn" onclick="filterCategory('buildings', this)">Buildings</button>
-        <button class="category-btn" onclick="filterCategory('love', this)">Love</button>
-        <button class="category-btn" onclick="filterCategory('animals', this)">Animals</button>
-        <button class="category-btn" onclick="filterCategory('cityscapes', this)">Cityscapes</button>
-    </div>
-
     <div class="container">
-        <div class="gallery-grid" id="galleryGrid"></div>
+        <div id="subCategorySection">
+            <h2 class="gallery-main-title" id="mainCategoryTitle">All Categories</h2>
+            
+            <div class="category-container" id="categoryContainer">
+                <button class="category-btn active" onclick="changeMainCategory('all', this)">All</button>
+                <button class="category-btn" onclick="changeMainCategory('islamic', this)">Islamic</button>
+                <button class="category-btn" onclick="changeMainCategory('hindu', this)">Hindu</button>
+                <button class="category-btn" onclick="changeMainCategory('christian', this)">Christian</button>
+                <button class="category-btn" onclick="changeMainCategory('buddhist', this)">Buddhist</button>
+                <button class="category-btn" onclick="changeMainCategory('nature', this)">Nature</button>
+                <button class="category-btn" onclick="changeMainCategory('flowers', this)">Flowers</button>
+                <button class="category-btn" onclick="changeMainCategory('buildings', this)">Buildings</button>
+                <button class="category-btn" onclick="changeMainCategory('love', this)">Love</button>
+                <button class="category-btn" onclick="changeMainCategory('animals', this)">Animals</button>
+                <button class="category-btn" onclick="changeMainCategory('cityscapes', this)">Cityscapes</button>
+            </div>
 
-        <div class="pagination-container" id="paginationContainer" style="display: none;">
-            <button class="page-btn" id="prevBtn" onclick="changePage(-1)">
-                <span>&#10094;</span> Previous
-            </button>
-            <span id="pageIndicator">Page 1 of 1</span>
-            <button class="page-btn" id="nextBtn" onclick="changePage(1)">
-                Next <span>&#10095;</span>
-            </button>
+            <div class="subcategories-grid" id="subCategoriesGrid"></div>
         </div>
+
+        <div class="gallery-grid" id="galleryGrid" style="display: none;"></div>
     </div>
 
     <div class="modal" id="imageModal">
         <span class="close-btn" onclick="closeModal()">&times;</span>
-        <div class="modal-content">
+        <div class="modal-content" style="text-align: center;">
             <img id="modalImg" src="" alt="Large View">
             <div class="modal-actions">
                 <button class="modal-action-btn" id="modalLikeBtn" onclick="handleLike()">
@@ -426,25 +397,67 @@
         const database = firebase.database();
 
         let wallpapers = [];
+        let allSubCategories = {};
         let userInteractions = JSON.parse(localStorage.getItem('userInteractions')) || {};
         let currentActiveUrl = '';
         let currentActiveId = '';
-        let isFirstLoad = true;
-        let currentCategory = 'all';
-        let searchQuery = '';
+        let currentSelectedSubCat = null;
+        let isInitialLoadDone = false;
+        let currentMainCat = 'all'; 
 
-        let currentPage = 1;
-        const itemsPerPage = 16; 
+        // ১০টি ক্যাটাগরির জন্য ডিফল্ট প্রিভিউ ফটো (AB1.png থেকে AB10.png) সেট করা হলো
+        const mainCategoriesList = [
+            { key: 'islamic', name: 'Islamic', defaultImg: 'AB1.png' },
+            { key: 'hindu', name: 'Hindu', defaultImg: 'AB2.png' },
+            { key: 'christian', name: 'Christian', defaultImg: 'AB3.png' },
+            { key: 'buddhist', name: 'Buddhist', defaultImg: 'AB4.png' },
+            { key: 'nature', name: 'Nature', defaultImg: 'AB5.png' },
+            { key: 'flowers', name: 'Flowers', defaultImg: 'AB6.png' },
+            { key: 'buildings', name: 'Buildings', defaultImg: 'AB7.png' },
+            { key: 'love', name: 'Love', defaultImg: 'AB8.png' },
+            { key: 'animals', name: 'Animals', defaultImg: 'AB9.png' },
+            { key: 'cityscapes', name: 'Cityscapes', defaultImg: 'AB10.png' }
+        ];
 
         window.onload = function() {
+            loadSubCategoriesFromFirebase();
             loadWallpapersFromFirebase();
             trackVisitor(); 
         };
 
         function trackVisitor() {
-            const visitorRef = database.ref('site_stats/total_visits');
-            visitorRef.transaction((currentVisits) => {
-                return (currentVisits || 0) + 1;
+            database.ref('site_stats/total_visits').transaction((currentVisits) => (currentVisits || 0) + 1);
+        }
+
+        function changeMainCategory(categoryKey, btnElement) {
+            currentMainCat = categoryKey;
+            currentSelectedSubCat = null; 
+
+            const buttons = document.querySelectorAll('.category-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            btnElement.classList.add('active');
+
+            btnElement.scrollIntoView({
+                behavior: 'smooth',
+                inline: 'center',
+                block: 'nearest'
+            });
+
+            const titleElement = document.getElementById('mainCategoryTitle');
+            if (categoryKey === 'all') {
+                titleElement.innerText = "All Categories";
+            } else {
+                titleElement.innerText = btnElement.innerText + " Wallpaper Gallery";
+            }
+
+            renderUI();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function loadSubCategoriesFromFirebase() {
+            database.ref('subcategories').on('value', (snapshot) => {
+                allSubCategories = snapshot.val() || {};
+                renderUI();
             });
         }
 
@@ -463,7 +476,7 @@
                                     categoryFolder: categoryKey,
                                     url: item.url,
                                     category: item.category ? item.category.toLowerCase() : categoryKey,
-                                    title: item.title ? item.title.toLowerCase() : '',
+                                    subType: item.subType || '',
                                     downloads: item.downloads || 0,
                                     likes: item.likes || 0,
                                     dislikes: item.dislikes || 0
@@ -473,60 +486,16 @@
                     });
                     wallpapers.reverse();
                 }
-                renderGallery();
-
-                if (isFirstLoad) {
-                    isFirstLoad = false;
-                    hidePreloader();
+                
+                if (!isInitialLoadDone) {
+                    isInitialLoadDone = true;
+                    renderUI();
+                    const preloader = document.getElementById('preloader');
+                    if (preloader) { preloader.style.opacity = '0'; setTimeout(() => preloader.style.display = 'none', 300); }
+                } else {
+                    updateModalUI();
                 }
             });
-        }
-
-        function filterCategory(category, btnElement) {
-            currentCategory = category;
-            searchQuery = '';
-            document.getElementById('searchInput').value = '';
-            currentPage = 1;
-            
-            const buttons = document.querySelectorAll('.category-btn');
-            buttons.forEach(btn => btn.classList.remove('active'));
-            if (btnElement) btnElement.classList.add('active');
-            
-            renderGallery();
-        }
-
-        function handleSearchInput(event) {
-            if (event.key === 'Enter') {
-                performSearch();
-            }
-        }
-
-        function performSearch() {
-            const inputVal = document.getElementById('searchInput').value.trim().toLowerCase();
-            searchQuery = inputVal;
-            currentPage = 1;
-
-            if (searchQuery !== '') {
-                const buttons = document.querySelectorAll('.category-btn');
-                buttons.forEach(btn => btn.classList.remove('active'));
-            }
-            renderGallery();
-        }
-
-        function changePage(direction) {
-            currentPage += direction;
-            renderGallery();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function hidePreloader() {
-            const preloader = document.getElementById('preloader');
-            if (preloader) {
-                preloader.style.opacity = '0';
-                setTimeout(() => {
-                    preloader.style.display = 'none';
-                }, 300);
-            }
         }
 
         function formatNumber(num) {
@@ -536,106 +505,153 @@
             return num;
         }
 
-        function renderGallery() {
-            const grid = document.getElementById('galleryGrid');
-            const paginationContainer = document.getElementById('paginationContainer');
+        function handleImageLoaded(imgElement) {
+            const spinner = imgElement.parentElement.querySelector('.card-spinner');
+            if (spinner) {
+                spinner.remove();
+            }
+            imgElement.classList.add('loaded');
+        }
 
-            grid.style.opacity = '0';
+        function renderUI() {
+            const subSec = document.getElementById('subCategorySection');
+            const galleryGrid = document.getElementById('galleryGrid');
 
-            setTimeout(() => {
-                grid.innerHTML = '';
+            if (!currentSelectedSubCat) {
+                subSec.style.display = 'block';
+                galleryGrid.style.display = 'none';
 
-                let filteredWallpapers = wallpapers;
-                
-                if (searchQuery !== '') {
-                    filteredWallpapers = wallpapers.filter(item => 
-                        item.category.includes(searchQuery) || 
-                        item.categoryFolder.toLowerCase().includes(searchQuery) ||
-                        item.title.includes(searchQuery)
-                    );
-                } else if (currentCategory !== 'all') {
-                    filteredWallpapers = wallpapers.filter(item => item.category === currentCategory);
+                const subGrid = document.getElementById('subCategoriesGrid');
+                subGrid.innerHTML = '';
+
+                if (currentMainCat === 'all') {
+                    mainCategoriesList.forEach(cat => {
+                        let previewImg = '';
+                        const subs = allSubCategories[cat.key] || {};
+                        const subKeys = Object.keys(subs);
+                        if (subKeys.length > 0) {
+                            const subData = subs[subKeys[0]];
+                            previewImg = (typeof subData === 'object') ? subData.image : '';
+                        }
+                        if (!previewImg) {
+                            const foundWp = wallpapers.find(w => w.categoryFolder === cat.key);
+                            if (foundWp) previewImg = foundWp.url;
+                        }
+                        // যদি ডাটাবেজ বা আপলোড থেকে ছবি না পাওয়া যায়, তবে নির্দিষ্ট ডিফল্ট ছবি (যেমন AB1.png) ব্যবহার হবে
+                        if (!previewImg) {
+                            previewImg = cat.defaultImg;
+                        }
+
+                        const card = document.createElement('div');
+                        card.className = 'subcat-card';
+                        card.onclick = () => {
+                            currentMainCat = cat.key;
+                            const buttons = document.querySelectorAll('.category-btn');
+                            buttons.forEach(btn => {
+                                if (btn.innerText.toLowerCase() === cat.name.toLowerCase()) {
+                                    changeMainCategory(cat.key, btn);
+                                }
+                            });
+                        };
+
+                        card.innerHTML = `
+                            <div class="img-container">
+                                <div class="card-spinner"></div>
+                                ${previewImg ? `<img src="${previewImg}" alt="${cat.name}" onload="handleImageLoaded(this)" loading="lazy">` : `<div class="card-spinner" style="display:none;"></div>`}
+                            </div>
+                            <div class="subcat-title-overlay">${cat.name}</div>
+                        `;
+                        subGrid.appendChild(card);
+                    });
+                } else {
+                    const subs = allSubCategories[currentMainCat] || {};
+                    const subKeys = Object.keys(subs);
+
+                    if (subKeys.length === 0) {
+                        subGrid.innerHTML = '<p style="grid-column: span 5; text-align: center; color: #777; padding: 20px;">কোন সাব-ক্যাটাগরি পাওয়া যায়নি।</p>';
+                        return;
+                    }
+
+                    subKeys.forEach(subKey => {
+                        const subData = subs[subKey];
+                        const subImg = (typeof subData === 'object') ? subData.image : '';
+
+                        const card = document.createElement('div');
+                        card.className = 'subcat-card';
+                        card.onclick = () => {
+                            currentSelectedSubCat = subKey;
+                            history.pushState({subCat: subKey}, "");
+                            renderUI();
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                        };
+                        
+                        card.innerHTML = `
+                            <div class="img-container">
+                                <div class="card-spinner"></div>
+                                ${subImg ? `<img src="${subImg}" alt="Card" onload="handleImageLoaded(this)" loading="lazy">` : `<div class="card-spinner" style="display:none;"></div>`}
+                            </div>
+                        `;
+                        subGrid.appendChild(card);
+                    });
                 }
+            } else {
+                subSec.style.display = 'none';
+                galleryGrid.style.display = 'grid';
 
-                if (filteredWallpapers.length === 0) {
-                    grid.innerHTML = '<p style="grid-column: span 4; text-align: center; padding: 40px; color: #777;">No Wallpapers Found</p>';
-                    paginationContainer.style.display = 'none';
-                    grid.style.opacity = '1';
+                galleryGrid.innerHTML = '';
+                const filtered = wallpapers.filter(item => item.categoryFolder === currentMainCat && item.subType === currentSelectedSubCat);
+
+                if (filtered.length === 0) {
+                    galleryGrid.innerHTML = '<p style="grid-column: span 3; text-align: center; padding: 40px; color: #777;">এই ক্যাটাগরিতে কোনো ওয়ালপেপার নেই</p>';
                     return;
                 }
 
-                const totalPages = Math.ceil(filteredWallpapers.length / itemsPerPage);
-                if (currentPage > totalPages) currentPage = totalPages;
-                if (currentPage < 1) currentPage = 1;
-
-                const startIndex = (currentPage - 1) * itemsPerPage;
-                const endIndex = startIndex + itemsPerPage;
-                const paginatedItems = filteredWallpapers.slice(startIndex, endIndex);
-
-                paginatedItems.forEach((item) => {
+                filtered.forEach(item => {
                     const card = document.createElement('div');
                     card.className = 'wallpaper-card';
+                    card.setAttribute('data-id', item.id);
                     card.onclick = () => openModal(item.id);
 
-                    const img = document.createElement('img');
-                    img.src = item.url; 
-                    img.alt = 'Wallpaper';
-                    img.loading = 'lazy';
-
-                    const footer = document.createElement('div');
-                    footer.className = 'card-footer';
-
-                    const statsDiv = document.createElement('div');
-                    statsDiv.className = 'card-stats';
-                    statsDiv.innerHTML = `
-                        <span class="stat-item">👍 ${formatNumber(item.likes || 0)}</span>
-                        <span class="stat-item">👎 ${formatNumber(item.dislikes || 0)}</span>
+                    card.innerHTML = `
+                        <div class="img-container">
+                            <div class="card-spinner"></div>
+                            <img src="${item.url}" alt="Wallpaper" onload="handleImageLoaded(this)" loading="lazy">
+                        </div>
+                        <div class="card-footer">
+                            <div class="card-stats">
+                                <span class="card-like-${item.id}">👍 ${formatNumber(item.likes || 0)}</span> 
+                                <span class="card-dislike-${item.id}">👎 ${formatNumber(item.dislikes || 0)}</span>
+                            </div>
+                            <span class="download-count card-download-${item.id}">${formatNumber(item.downloads || 0)} 📥</span>
+                        </div>
                     `;
-
-                    const downloadSpan = document.createElement('span');
-                    downloadSpan.className = 'download-count';
-                    downloadSpan.innerHTML = `${formatNumber(item.downloads || 0)} 📥`;
-
-                    footer.appendChild(statsDiv);
-                    footer.appendChild(downloadSpan);
-                    
-                    card.appendChild(img);
-                    card.appendChild(footer);
-                    grid.appendChild(card);
+                    galleryGrid.appendChild(card);
                 });
-
-                if (totalPages > 1) {
-                    paginationContainer.style.display = 'flex';
-                    document.getElementById('pageIndicator').innerText = `Page ${currentPage} of ${totalPages}`;
-                    document.getElementById('prevBtn').disabled = currentPage === 1;
-                    document.getElementById('nextBtn').disabled = currentPage === totalPages;
-                } else {
-                    paginationContainer.style.display = 'none';
-                }
-
-                grid.style.opacity = '1';
-            }, 150);
+            }
         }
+
+        window.onpopstate = function(event) {
+            if (currentSelectedSubCat) {
+                currentSelectedSubCat = null;
+                renderUI();
+            }
+        };
 
         function openModal(id) {
             const item = wallpapers.find(w => w.id === id);
             if (!item) return;
-
-            currentActiveUrl = item.url; 
+            currentActiveUrl = item.url;
             currentActiveId = id;
-            const modal = document.getElementById('imageModal');
-            const modalImg = document.getElementById('modalImg');
-
-            modal.style.display = 'flex';
-            modalImg.src = item.url;
-
+            document.getElementById('modalImg').src = item.url;
+            
+            document.getElementById('imageModal').style.display = 'flex';
             updateModalUI();
         }
 
         function updateModalUI() {
             const item = wallpapers.find(w => w.id === currentActiveId);
             if (!item) return;
-
+            
             document.getElementById('modalLikeCount').innerText = formatNumber(item.likes || 0);
             document.getElementById('modalDislikeCount').innerText = formatNumber(item.dislikes || 0);
             document.getElementById('modalDownloadCount').innerText = formatNumber(item.downloads || 0);
@@ -652,6 +668,14 @@
             } else if (userState === 'dislike') {
                 dislikeBtn.classList.add('active-dislike');
             }
+
+            const cardLikeEl = document.querySelector(`.card-like-${currentActiveId}`);
+            const cardDislikeEl = document.querySelector(`.card-dislike-${currentActiveId}`);
+            const cardDownloadEl = document.querySelector(`.card-download-${currentActiveId}`);
+
+            if (cardLikeEl) cardLikeEl.innerText = `👍 ${formatNumber(item.likes || 0)}`;
+            if (cardDislikeEl) cardDislikeEl.innerText = `👎 ${formatNumber(item.dislikes || 0)}`;
+            if (cardDownloadEl) cardDownloadEl.innerText = `${formatNumber(item.downloads || 0)} 📥`;
         }
 
         function handleLike() {
@@ -659,8 +683,8 @@
             if (!item) return;
 
             let userState = userInteractions[currentActiveId];
-            let newLikes = item.likes;
-            let newDislikes = item.dislikes;
+            let newLikes = item.likes || 0;
+            let newDislikes = item.dislikes || 0;
 
             if (userState === 'like') {
                 newLikes--;
@@ -673,13 +697,16 @@
                 userInteractions[currentActiveId] = 'like';
             }
 
+            item.likes = newLikes;
+            item.dislikes = newDislikes;
+            updateModalUI();
+
             database.ref('wallpapers/' + item.categoryFolder + '/' + currentActiveId).update({
                 likes: newLikes,
                 dislikes: newDislikes
             });
 
             localStorage.setItem('userInteractions', JSON.stringify(userInteractions));
-            updateModalUI();
         }
 
         function handleDislike() {
@@ -687,8 +714,8 @@
             if (!item) return;
 
             let userState = userInteractions[currentActiveId];
-            let newLikes = item.likes;
-            let newDislikes = item.dislikes;
+            let newLikes = item.likes || 0;
+            let newDislikes = item.dislikes || 0;
 
             if (userState === 'dislike') {
                 newDislikes--;
@@ -701,47 +728,51 @@
                 userInteractions[currentActiveId] = 'dislike';
             }
 
+            item.likes = newLikes;
+            item.dislikes = newDislikes;
+            updateModalUI();
+
             database.ref('wallpapers/' + item.categoryFolder + '/' + currentActiveId).update({
                 likes: newLikes,
                 dislikes: newDislikes
             });
 
             localStorage.setItem('userInteractions', JSON.stringify(userInteractions));
-            updateModalUI();
         }
 
         function handleDownload() {
             const item = wallpapers.find(w => w.id === currentActiveId);
-            if (item) {
-                let newDownloads = (item.downloads || 0) + 1;
-                
-                database.ref('wallpapers/' + item.categoryFolder + '/' + currentActiveId).update({
-                    downloads: newDownloads
-                });
+            if (!item) return;
 
-                fetch(currentActiveUrl)
-                    .then(response => response.blob())
-                    .then(blob => {
-                        const blobUrl = window.URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = blobUrl;
-                        a.download = 'wallpaper_' + Date.now() + '.jpg';
-                        document.body.appendChild(a);
-                        a.click();
-                        document.body.removeChild(a);
-                        window.URL.revokeObjectURL(blobUrl);
-                    })
-                    .catch(() => {
-                        window.open(currentActiveUrl, '_blank');
-                    });
-            }
+            let newDownloads = (item.downloads || 0) + 1;
+            
+            item.downloads = newDownloads;
+            updateModalUI();
+
+            database.ref('wallpapers/' + item.categoryFolder + '/' + currentActiveId).update({
+                downloads: newDownloads
+            });
+
+            fetch(currentActiveUrl)
+                .then(response => response.blob())
+                .then(blob => {
+                    const blobUrl = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = blobUrl;
+                    a.download = 'wallpaper_' + Date.now() + '.jpg';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(blobUrl);
+                })
+                .catch(() => {
+                    window.open(currentActiveUrl, '_blank');
+                });
         }
 
-        function closeModal() {
-            const modal = document.getElementById('imageModal');
-            modal.style.display = 'none';
+        function closeModal() { 
+            document.getElementById('imageModal').style.display = 'none'; 
         }
     </script>
-
 </body>
 </html>
