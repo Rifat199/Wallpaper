@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>অ্যাডমিন প্যানেল - ওয়ালপেপার ম্যানেজমেন্ট</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { 
+            background: linear-gradient(135deg, #1e272e, #2c3e50); 
+            color: #fff; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            padding: 20px; 
+        }
+        .admin-box { 
+            background: rgba(44, 62, 80, 0.85); 
+            backdrop-filter: blur(12px);
+            padding: 30px; 
+            border-radius: 16px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
+            width: 100%; 
+            max-width: 580px; 
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .admin-box h2 { 
+            margin-bottom: 25px; 
+            text-align: center; 
+            color: #00d2d3; 
+            font-size: 24px;
+            letter-spacing: 0.5px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px; color: #dfe4ea; }
+        .form-group input, .form-group select { 
+            width: 100%; 
+            padding: 12px 15px; 
+            border: 1px solid rgba(255, 255, 255, 0.15); 
+            border-radius: 8px; 
+            background: rgba(30, 39, 46, 0.8); 
+            color: white; 
+            font-size: 14px; 
+            transition: all 0.3s ease;
+        }
+        .form-group input:focus, .form-group select:focus {
+            border-color: #00d2d3;
+            box-shadow: 0 0 8px rgba(0, 210, 211, 0.3);
+            outline: none;
+        }
+        .form-group select option { background: #1e272e; color: white; }
+        
+        .btn { 
+            background: linear-gradient(135deg, #00d2d3, #01a3a4); 
+            color: white; 
+            padding: 14px; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            width: 100%; 
+            font-size: 16px; 
+            font-weight: bold; 
+            margin-top: 5px; 
+            box-shadow: 0 4px 15px rgba(0, 210, 211, 0.3);
+            transition: all 0.3s ease;
+        }
+        .btn:hover { 
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 210, 211, 0.5);
+        }
+        .btn:active { transform: translateY(0); }
+        .btn:disabled { background: #7f8c8d; cursor: not-allowed; opacity: 0.7; box-shadow: none; transform: none; }
+        
+        .sub-list-box { 
+            background: rgba(30, 39, 46, 0.6); 
+            padding: 10px; 
+            border-radius: 8px; 
+            margin-top: 10px; 
+            max-height: 220px; 
+            overflow-y: auto; 
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .sub-item { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            font-size: 14px; 
+            padding: 8px 10px; 
+            margin-bottom: 6px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 6px; 
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: background 0.2s;
+        }
+        .sub-item:hover { background: rgba(255, 255, 255, 0.07); }
+        
+        .sub-item-info { 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            flex: 1;
+            min-width: 0;
+        }
+        .sub-item img { 
+            width: 38px; 
+            height: 38px; 
+            border-radius: 6px; 
+            object-fit: cover; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3); 
+            flex-shrink: 0;
+        }
+        .sub-item span {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-weight: 500;
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 6px;
+            flex-shrink: 0;
+            margin-left: 10px;
+        }
+        .action-btns button { 
+            border: none; 
+            padding: 6px 10px; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            font-size: 11px; 
+            font-weight: 600;
+            transition: opacity 0.2s;
+        }
+        .action-btns button:hover { opacity: 0.85; }
+        .edit-btn { background: #e58e26 !important; color: white; }
+        .delete-btn { background: #ff5252 !important; color: white; }
+
+        .report-box {
+            margin-top: 30px;
+            background: rgba(30, 39, 46, 0.7);
+            padding: 18px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .report-box h3 {
+            color: #ff9f43;
+            font-size: 17px;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+        .report-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+        }
+        .report-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .report-item span:last-child {
+            font-weight: bold;
+            color: #00d2d3;
+        }
+
+        /* কাস্টম মডার্ন মডাল ডিজাইন */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+            padding: 20px;
+        }
+        .modal-content {
+            background: #2f3640;
+            padding: 25px;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 400px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+        .modal-content h3 { color: #00d2d3; margin-bottom: 15px; text-align: center; }
+        .modal-btns { display: flex; gap: 10px; margin-top: 15px; }
+    </style>
+</head>
+<body>
+
+    <div class="admin-box">
+        <h2>🌙 ওয়ালপেপার অ্যাডমিন প্যানেল</h2>
+
+        <!-- GitHub কনফিগারেশন (ডিফল্ট মান সহ ইনপুট ফিল্ড) -->
+        <div class="form-group">
+            <label for="githubToken">GitHub Token:</label>
+            <input type="text" id="githubToken" value="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" placeholder="আপনার GitHub Token দিন">
+        </div>
+        <div class="form-group">
+            <label for="repoName">Repository (user/repo):</label>
+            <input type="text" id="repoName" value="Rifat199/Wallpaper" placeholder="Rifat199/Wallpaper">
+        </div>
+        
+        <div class="form-group">
+            <label for="wallpaperCategory">১. মূল ক্যাটাগরি সিলেক্ট করুন:</label>
+            <select id="wallpaperCategory" onchange="onMainCategoryChange()">
+                <option value="islamic">Islamic</option>
+                <option value="hindu">Hindu</option>
+                <option value="christian">Christian</option>
+                <option value="buddhist">Buddhist</option>
+                <option value="nature">Nature</option>
+                <option value="flowers">Flowers</option>
+                <option value="buildings">Buildings</option>
+                <option value="love">Love</option>
+                <option value="animals">Animals</option>
+                <option value="cityscapes">Cityscapes</option>
+            </select>
+        </div>
+
+        <div class="form-group" style="background: rgba(30, 39, 46, 0.5); padding: 15px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05);">
+            <label>নতুন কার্ড (সাব-ক্যাটাগরি) যোগ করুন:</label>
+            <input type="text" id="newSubName" placeholder="কার্ডের নাম (যেমন: Makkah বা Mountain)" style="margin-bottom: 10px;">
+            <label style="font-size: 12px; margin-bottom: 4px; color: #b2bec3;">কার্ডের থাম্বনেইল ফটো:</label>
+            <input type="file" id="newSubImage" accept="image/*" style="margin-bottom: 12px;">
+            <button class="btn" style="background: linear-gradient(135deg, #0984e3, #74b9ff); box-shadow: 0 4px 15px rgba(9, 132, 227, 0.3);" onclick="addSubCategory()">সাব-ক্যাটাগরি যোগ করুন</button>
+            
+            <div class="sub-list-box" id="subCategoryList"></div>
+        </div>
+        
+        <div class="form-group">
+            <label for="wallpaperSubType">২. কার্ড সিলেক্ট করুন:</label>
+            <select id="wallpaperSubType"></select>
+        </div>
+        
+        <div class="form-group">
+            <label for="imageFile">৩. ওয়ালপেপার ছবি সিলেক্ট করুন (একাধিক):</label>
+            <input type="file" id="imageFile" accept="image/*" multiple>
+        </div>
+        
+        <button class="btn" id="uploadBtn" onclick="uploadWallpaper()">ছবি আপলোড করুন</button>
+        <p id="uploadStatus" style="margin-top: 15px; text-align: center; font-weight: bold; font-size: 13px;"></p>
+
+        <div class="report-box">
+            <h3>📊 সাইট ও ফটো রিপোর্ট</h3>
+            <div class="report-item">
+                <span>মোট সাইট ভিজিটর (Views):</span>
+                <span id="totalVisitsCount">লোড হচ্ছে...</span>
+            </div>
+            <div class="report-item">
+                <span>মোট আপলোডকৃত ছবি:</span>
+                <span id="totalWallpapersCount">লোড হচ্ছে...</span>
+            </div>
+            <div class="report-item">
+                <span>সর্বাধিক ডাউনলোড হওয়া ছবি:</span>
+                <span id="topDownloadedCount">লোড হচ্ছে...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- কাস্টম এডিট মডাল -->
+    <div class="modal-overlay" id="editModal">
+        <div class="modal-content">
+            <h3>কার্ড এডিট করুন</h3>
+            <div class="form-group">
+                <label>নতুন নাম:</label>
+                <input type="text" id="editSubNameInput">
+            </div>
+            <div class="form-group">
+                <label>নতুন ছবি (ঐচ্ছিক):</label>
+                <input type="file" id="editSubImageInput" accept="image/*">
+            </div>
+            <div class="modal-btns">
+                <button class="btn" style="background: #ff5252; box-shadow: none;" onclick="closeEditModal()">বাতিল</button>
+                <button class="btn" style="background: #00d2d3; box-shadow: none;" onclick="saveEditSubCategory()">আপডেট করুন</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBmW8LE1Z22u4NiFtkTkU7SJtOZhy4tQLik",
+            authDomain: "wallpaper-76b9a.firebaseapp.com",
+            databaseURL: "https://wallpaper-76b9a-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "wallpaper-76b9a",
+            storageBucket: "wallpaper-76b9a.firebasestorage.app",
+            messagingSenderId: "717212155948",
+            appId: "1:717212155948:web:d20a8a7286e4b98f4f1189"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        let currentEditingKey = null;
+        let currentEditingOldImage = null;
+
+        window.onload = function() {
+            loadSubCategories();
+            loadAdminReports();
+        };
+
+        function onMainCategoryChange() {
+            loadSubCategories();
+        }
+
+        // GitHub Upload Function (Reads dynamically from input fields)
+        async function uploadToGitHub(file) {
+            const token = document.getElementById('githubToken').value.trim();
+            const repo = document.getElementById('repoName').value.trim();
+            
+            if (!token || !repo) {
+                throw new Error('দয়া করে GitHub Token এবং Repository নাম দিন!');
+            }
+
+            const reader = new FileReader();
+            
+            return new Promise((resolve, reject) => {
+                reader.onload = async () => {
+                    try {
+                        const base64Content = reader.result.split(',')[1];
+                        const fileName = 'uploads/' + Date.now() + '_' + file.name;
+                        const url = `https://api.github.com/repos/${repo}/contents/${fileName}`;
+
+                        const response = await fetch(url, {
+                            method: 'PUT',
+                            headers: { 
+                                'Authorization': `token ${token}`, 
+                                'Content-Type': 'application/json' 
+                            },
+                            body: JSON.stringify({ 
+                                message: "Upload wallpaper via admin panel", 
+                                content: base64Content 
+                            })
+                        });
+                        const data = await response.json();
+                        if (response.ok) {
+                            resolve(data.content.download_url);
+                        } else {
+                            reject(data.message || 'GitHub upload failed');
+                        }
+                    } catch (err) {
+                        reject(err.message);
+                    }
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function loadSubCategories() {
+            const mainCat = document.getElementById('wallpaperCategory').value;
+
+            database.ref('subcategories/' + mainCat).on('value', (snapshot) => {
+                const subs = snapshot.val() || {};
+                const subSelect = document.getElementById('wallpaperSubType');
+                const subListContainer = document.getElementById('subCategoryList');
+                
+                subSelect.innerHTML = '';
+                subListContainer.innerHTML = '';
+
+                Object.keys(subs).forEach(subKey => {
+                    const subData = subs[subKey];
+                    
+                    const opt = document.createElement('option');
+                    opt.value = subData.name;
+                    opt.innerText = subData.name;
+                    subSelect.appendChild(opt);
+
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'sub-item';
+                    itemDiv.innerHTML = `
+                        <div class="sub-item-info">
+                            ${subData.image ? `<img src="${subData.image}" alt="Img">` : ''}
+                            <span>${subData.name}</span>
+                        </div>
+                        <div class="action-btns">
+                            <button class="edit-btn" onclick="openEditModal('${subKey}', '${subData.name}', '${subData.image || ''}')">এডিট</button>
+                            <button class="delete-btn" onclick="deleteSubCategory('${subKey}')">ডিলিট</button>
+                        </div>
+                    `;
+                    subListContainer.appendChild(itemDiv);
+                });
+            });
+        }
+
+        function loadAdminReports() {
+            database.ref('site_stats/total_visits').on('value', (snapshot) => {
+                const visits = snapshot.val() || 0;
+                document.getElementById('totalVisitsCount').innerText = visits;
+            });
+
+            database.ref('wallpapers').on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (!data) {
+                    document.getElementById('totalWallpapersCount').innerText = '0';
+                    document.getElementById('topDownloadedCount').innerText = 'নেই';
+                    return;
+                }
+
+                let totalCount = 0;
+                let maxDownloads = -1;
+                let topItemName = 'নেই';
+
+                function countItems(obj) {
+                    if (!obj || typeof obj !== 'object') return;
+
+                    Object.keys(obj).forEach(key => {
+                        let item = obj[key];
+                        if (item && typeof item === 'object' && 'url' in item) {
+                            totalCount++;
+                            let downloads = item.downloads || 0;
+                            if (downloads > maxDownloads) {
+                                maxDownloads = downloads;
+                                topItemName = `${downloads} বার ডাউনলোড`;
+                            }
+                        } else {
+                            countItems(item);
+                        }
+                    });
+                }
+
+                countItems(data);
+
+                document.getElementById('totalWallpapersCount').innerText = totalCount;
+                document.getElementById('topDownloadedCount').innerText = topItemName;
+            });
+        }
+
+        async function addSubCategory() {
+            const mainCat = document.getElementById('wallpaperCategory').value;
+            const subName = document.getElementById('newSubName').value.trim();
+            const imageFile = document.getElementById('newSubImage').files[0];
+
+            if (!subName) { alert('নাম লিখুন!'); return; }
+            let imageUrl = '';
+
+            if (imageFile) {
+                try {
+                    imageUrl = await uploadToGitHub(imageFile);
+                } catch (error) {
+                    alert('GitHub আপলোড এরর: ' + error);
+                    return;
+                }
+            }
+
+            database.ref(`subcategories/${mainCat}`).push({ name: subName, image: imageUrl });
+            document.getElementById('newSubName').value = '';
+            document.getElementById('newSubImage').value = '';
+            alert('সফলভাবে যোগ হয়েছে!');
+        }
+
+        function openEditModal(subKey, currentName, currentImage) {
+            currentEditingKey = subKey;
+            currentEditingOldImage = currentImage;
+            document.getElementById('editSubNameInput').value = currentName;
+            document.getElementById('editSubImageInput').value = '';
+            document.getElementById('editModal').style.display = 'flex';
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+            currentEditingKey = null;
+            currentEditingOldImage = null;
+        }
+
+        async function saveEditSubCategory() {
+            const mainCat = document.getElementById('wallpaperCategory').value;
+            const newName = document.getElementById('editSubNameInput').value.trim();
+            const imageFile = document.getElementById('editSubImageInput').files[0];
+
+            if (!newName) { alert('নাম খালি রাখা যাবে না!'); return; }
+
+            let imageUrl = currentEditingOldImage;
+
+            if (imageFile) {
+                alert("নতুন ছবি আপলোড হচ্ছে, দয়া করে অপেক্ষা করুন...");
+                try {
+                    imageUrl = await uploadToGitHub(imageFile);
+                } catch (err) {
+                    alert("ছবি আপলোড ব্যর্থ হয়েছে: " + err);
+                    return;
+                }
+            }
+
+            database.ref(`subcategories/${mainCat}/${currentEditingKey}`).update({
+                name: newName,
+                image: imageUrl
+            });
+
+            alert("সফলভাবে আপডেট হয়েছে!");
+            closeEditModal();
+        }
+
+        function deleteSubCategory(subKey) {
+            const mainCat = document.getElementById('wallpaperCategory').value;
+            if (confirm('ডিলিট করতে চান?')) {
+                database.ref(`subcategories/${mainCat}/${subKey}`).remove();
+            }
+        }
+
+        async function uploadWallpaper() {
+            const mainCat = document.getElementById('wallpaperCategory').value;
+            const subType = document.getElementById('wallpaperSubType').value;
+            const files = document.getElementById('imageFile').files;
+            const statusText = document.getElementById('uploadStatus');
+            const uploadBtn = document.getElementById('uploadBtn');
+            
+            if (!files.length || !subType) { alert('ছবি এবং কার্ড সিলেক্ট করুন!'); return; }
+
+            uploadBtn.disabled = true;
+            uploadBtn.innerText = 'আপলোড হচ্ছে... একটু অপেক্ষা করুন';
+
+            statusText.style.color = '#f1c40f';
+            statusText.innerText = `মোট ${files.length}টি ছবি পাওয়া গেছে। GitHub এ আপলোড শুরু হচ্ছে...`;
+            
+            let successCount = 0;
+            let failCount = 0;
+            let errorMessage = '';
+
+            for (let i = 0; i < files.length; i++) {
+                const currentFile = files[i];
+                statusText.innerText = `আপলোড হচ্ছে: (${i + 1}/${files.length}) - ${currentFile.name}`;
+
+                try {
+                    const downloadUrl = await uploadToGitHub(currentFile);
+                    if (downloadUrl) {
+                        database.ref('wallpapers/' + mainCat).push({
+                            url: downloadUrl,
+                            category: mainCat,
+                            subType: subType,
+                            downloads: 0, 
+                            likes: 0, 
+                            dislikes: 0
+                        });
+                        successCount++;
+                    }
+                } catch (error) {
+                    failCount++;
+                    errorMessage = error;
+                    break;
+                }
+            }
+
+            if (failCount > 0 && successCount === 0) {
+                statusText.style.color = '#ff5252';
+                statusText.innerText = `আপলোড ব্যর্থ হয়েছে! কারণ: ${errorMessage}`;
+            } else if (failCount > 0 && successCount > 0) {
+                statusText.style.color = '#ff9f43';
+                statusText.innerText = `আংশিক সম্পন্ন! সফল: ${successCount}টি, ব্যর্থ: ${failCount}টি (${errorMessage})।`;
+            } else {
+                statusText.style.color = '#00d2d3';
+                statusText.innerText = `আপলোড সম্পন্ন! সফলভাবে ${successCount}টি ছবি আপলোড হয়েছে।`;
+            }
+
+            document.getElementById('imageFile').value = '';
+            uploadBtn.disabled = false;
+            uploadBtn.innerText = 'ছবি আপলোড করুন';
+            loadAdminReports();
+        }
+    </script>
+</body>
+</html>
